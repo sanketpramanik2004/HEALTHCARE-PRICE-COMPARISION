@@ -1,0 +1,16 @@
+node_modules/
+hospital-frontend/node_modules/
+hospital/build/
+hospital/target/
+
+.idea/
+.vscode/
+.DS_Store/
+
+.env
+.env.*
+
+*.log
+
+hospital/src/main/resources/application-local.properties
+hospital/src/main/resources/application.properties
