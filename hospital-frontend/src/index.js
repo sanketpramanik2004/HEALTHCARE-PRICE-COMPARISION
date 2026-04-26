@@ -4,10 +4,16 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import "leaflet/dist/leaflet.css";
+import { HashRouter } from "react-router-dom";
+import { I18nProvider } from "./i18n/I18nProvider";
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <I18nProvider>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </I18nProvider>
   </React.StrictMode>
 );
 

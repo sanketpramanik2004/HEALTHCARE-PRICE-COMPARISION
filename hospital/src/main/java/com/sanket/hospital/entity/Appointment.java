@@ -16,11 +16,22 @@ public class Appointment {
 
     private String userName;
 
+    private Integer patientAge;
+
+    private String patientGender;
+
+    private String phoneNumber;
+
+    @Column(length = 1000)
+    private String patientNotes;
+
     private String serviceName;
 
     private LocalDate date;
 
     private LocalTime time;
+
+    private String userEmail;
 
     @Column(name = "status")
     private String status; // PENDING, CONFIRMED, REJECTED

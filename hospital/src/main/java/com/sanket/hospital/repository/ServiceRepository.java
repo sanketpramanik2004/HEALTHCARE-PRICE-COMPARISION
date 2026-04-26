@@ -8,4 +8,8 @@ import java.util.List;
 public interface ServiceRepository extends JpaRepository<ServiceEntity, Long> {
 
     List<ServiceEntity> findByServiceName(String serviceName);
+
+    List<ServiceEntity> findByHospital_IdOrderByServiceNameAsc(Long hospitalId);
+
+    List<ServiceEntity> findByServiceNameContainingIgnoreCaseOrderByPriceAsc(String serviceName);
 }
