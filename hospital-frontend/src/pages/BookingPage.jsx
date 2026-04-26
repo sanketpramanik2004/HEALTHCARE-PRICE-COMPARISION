@@ -6,6 +6,7 @@ import EmptyState from "../components/ui/EmptyState";
 
 export default function BookingPage({
   selectedHospital,
+  selectedDoctor,
   serviceName,
   bookingForm,
   setBookingForm,
@@ -18,7 +19,7 @@ export default function BookingPage({
 
   useEffect(() => {
     setStep(1);
-  }, [selectedHospital?.id, serviceName]);
+  }, [selectedHospital?.id, selectedDoctor?.id, serviceName]);
 
   if (!canBook) {
     return <EmptyState title="Patient login required" subtitle="Please sign in with a USER account to book." />;
@@ -41,11 +42,17 @@ export default function BookingPage({
         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
             <Stethoscope className="h-4 w-4 text-brand-700" />
-            {serviceName}
+            {selectedDoctor ? `${selectedDoctor.specialization} Consultation` : serviceName}
           </span>
+          {selectedDoctor ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
+              <UserRound className="h-4 w-4 text-brand-700" />
+              Dr. {selectedDoctor.name}
+            </span>
+          ) : null}
           <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
             <CalendarDays className="h-4 w-4 text-brand-700" />
-            Choose a verified hospital slot
+            {selectedDoctor ? "Choose a consultation slot" : "Choose a verified hospital slot"}
           </span>
         </div>
       </Card>
@@ -198,7 +205,10 @@ export default function BookingPage({
             <div className="space-y-3 text-sm text-slate-600">
               <SummaryRow label="Hospital" value={selectedHospital.name} />
               <SummaryRow label="Location" value={selectedHospital.location} />
-              <SummaryRow label="Service" value={serviceName} />
+              <SummaryRow label="Service" value={selectedDoctor ? `${selectedDoctor.specialization} Consultation` : serviceName} />
+              {selectedDoctor ? <SummaryRow label="Doctor" value={`Dr. ${selectedDoctor.name}`} /> : null}
+              {selectedDoctor ? <SummaryRow label="Experience" value={`${selectedDoctor.experience || 0} years`} /> : null}
+              {selectedDoctor ? <SummaryRow label="Consultation Fee" value={`₹${selectedDoctor.consultationFee}`} /> : null}
               <SummaryRow label="Patient" value={bookingForm.userName || "Add patient details"} />
               <SummaryRow label="Age" value={bookingForm.patientAge || "-"} />
               <SummaryRow label="Gender" value={bookingForm.patientGender || "-"} />

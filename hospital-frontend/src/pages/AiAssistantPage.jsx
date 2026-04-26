@@ -13,6 +13,7 @@ export default function AiAssistantPage({
   onAnalyze,
   onAnalyzeCompare,
   onCompareService,
+  onBookDoctor,
 }) {
   const { t } = useI18n();
 
@@ -103,6 +104,55 @@ export default function AiAssistantPage({
         </div>
 
         <div className="space-y-6">
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold">Recommended Doctors</h3>
+              {recommendation?.doctorSuggestions?.length ? (
+                <span className="text-sm text-slate-500">{recommendation.doctorSuggestions.length} doctors</span>
+              ) : null}
+            </div>
+
+            {!recommendation?.doctorSuggestions?.length ? (
+              <EmptyState
+                title="No doctors suggested yet"
+                subtitle="Once AI analysis runs, matching doctors will appear here."
+              />
+            ) : (
+              <div className="space-y-3">
+                {recommendation.doctorSuggestions.slice(0, 5).map((doctor, idx) => (
+                  <motion.article
+                    key={doctor.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.04 }}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-brand-200 hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-slate-800">Dr. {doctor.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">{doctor.specialization}</p>
+                      </div>
+                      <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-semibold text-brand-700">
+                        ₹{doctor.consultationFee}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                      <span>{doctor.experience || 0} yrs</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-4 w-4 text-brand-700" />
+                        {doctor.hospital.name}
+                      </span>
+                      {doctor.distanceKm > 0 ? <span>{doctor.distanceKm.toFixed(2)} km</span> : null}
+                    </div>
+                    <div className="mt-3">
+                      <Button onClick={() => onBookDoctor(doctor)}>Book Appointment</Button>
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            )}
+          </Card>
+
           <Card className="space-y-4">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand-700" />

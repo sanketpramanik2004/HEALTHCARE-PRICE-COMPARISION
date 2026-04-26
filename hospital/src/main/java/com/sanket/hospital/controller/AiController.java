@@ -21,7 +21,10 @@ public class AiController {
     }
 
     @GetMapping("/recommendDoctor")
-    public ResponseEntity<AiDoctorSuggestionResponse> recommendDoctor(@RequestParam String symptoms) {
-        return ResponseEntity.ok(aiRecommendationService.recommendDoctorAndHospitals(symptoms));
+    public ResponseEntity<AiDoctorSuggestionResponse> recommendDoctor(
+            @RequestParam String symptoms,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon) {
+        return ResponseEntity.ok(aiRecommendationService.recommendDoctorAndHospitals(symptoms, lat, lon));
     }
 }

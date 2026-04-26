@@ -37,6 +37,10 @@ public class Appointment {
     private String status; // PENDING, CONFIRMED, REJECTED
 
     @ManyToOne
+    @JoinColumn(name = "doctor_id")
+    private Doctor doctor;
+
+    @ManyToOne
     @JoinColumn(name = "hospital_id")
     private Hospital hospital;
 }

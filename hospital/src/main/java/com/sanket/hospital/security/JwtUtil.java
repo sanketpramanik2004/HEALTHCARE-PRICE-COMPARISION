@@ -15,7 +15,7 @@ public class JwtUtil {
     private final Key key;
 
     public JwtUtil(
-            @Value("${app.jwt.secret:healthcare-price-comparison-secret-key-2026}") String secret) {
+            @Value("${app.jwt.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 

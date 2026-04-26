@@ -29,7 +29,7 @@ public class JwtFilter implements Filter {
 
         String path = req.getRequestURI();
 
-        if (isPublicEndpoint(path)) {
+        if (isPublicEndpoint(path, req.getMethod())) {
             chain.doFilter(request, response);
             return;
         }
@@ -55,13 +55,13 @@ public class JwtFilter implements Filter {
 
             String pathReq = req.getRequestURI();
 
-            if (isAdminOnlyEndpoint(pathReq) && !"ADMIN".equals(role)) {
+        if (isAdminOnlyEndpoint(pathReq, req.getMethod()) && !"ADMIN".equals(role)) {
                 res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 res.getWriter().write("Access Denied: ADMIN only");
                 return;
             }
 
-            if (isUserOnlyEndpoint(pathReq) && !"USER".equals(role)) {
+            if (isUserOnlyEndpoint(pathReq, req.getMethod()) && !"USER".equals(role)) {
                 res.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 res.getWriter().write("Access Denied: USER only");
                 return;
@@ -75,27 +75,34 @@ public class JwtFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    private boolean isPublicEndpoint(String path) {
+    private boolean isPublicEndpoint(String path, String method) {
         return path.contains("/login")
                 || path.contains("/register")
                 || path.endsWith("/all")
                 || path.contains("/search")
                 || path.contains("/compare")
                 || path.contains("/nearest")
-                || path.contains("/best");
+                || path.contains("/best")
+                || ("GET".equalsIgnoreCase(method) && path.equals("/doctors"))
+                || ("GET".equalsIgnoreCase(method) && path.matches("/hospitals/\\d+/doctors"))
+                || ("GET".equalsIgnoreCase(method) && path.matches("/doctors/\\d+/availableSlots"));
     }
 
-    private boolean isAdminOnlyEndpoint(String path) {
+    private boolean isAdminOnlyEndpoint(String path, String method) {
         return path.contains("/updateStatus")
                 || path.contains("/appointments")
                 || path.contains("/myHospitalAppointments")
                 || path.contains("/myHospitalServices")
                 || path.contains("/addService")
                 || path.endsWith("/add")
-                || path.contains("/myHospitalProfile");
+                || path.contains("/myHospitalProfile")
+                || path.contains("/myHospitalSlots")
+                || path.contains("/slots")
+                || ("POST".equalsIgnoreCase(method) && path.equals("/doctors"))
+                || ("DELETE".equalsIgnoreCase(method) && path.matches("/doctors/\\d+"));
     }
 
-    private boolean isUserOnlyEndpoint(String path) {
+    private boolean isUserOnlyEndpoint(String path, String method) {
         return path.contains("/book")
                 || path.contains("/myAppointments");
     }

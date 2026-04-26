@@ -1,5 +1,6 @@
 package com.sanket.hospital.dto.ai;
 
+import com.sanket.hospital.dto.DoctorResponse;
 import java.util.List;
 
 public record AiDoctorSuggestionResponse(
@@ -7,6 +8,7 @@ public record AiDoctorSuggestionResponse(
         String recommendedDoctor,
         String reasoningSummary,
         List<String> suggestedServices,
+        List<DoctorResponse> doctorSuggestions,
         List<HospitalServiceSuggestion> hospitalSuggestions,
         String recommendationSource,
         String note) {

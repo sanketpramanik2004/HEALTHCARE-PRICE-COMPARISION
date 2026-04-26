@@ -99,6 +99,7 @@ export default function UserDashboardPage({ appointments }) {
                       <StatusPill status={appt.status} />
                     </div>
                     <div className="mt-3 space-y-1 text-sm text-slate-600">
+                      {appt.doctor ? <p>Doctor: Dr. {appt.doctor.name}</p> : null}
                       <p className="inline-flex items-center gap-2">
                         <CalendarClock className="h-4 w-4 text-brand-700" />
                         {appt.date} at {appt.time}

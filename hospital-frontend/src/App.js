@@ -18,6 +18,10 @@ const AiAssistantPage = lazy(() => import("./pages/AiAssistantPage"));
 const BookingPage = lazy(() => import("./pages/BookingPage"));
 const UserDashboardPage = lazy(() => import("./pages/UserDashboardPage"));
 const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
+const AdminServicesPage = lazy(() => import("./pages/AdminServicesPage"));
+const AdminDoctorsPage = lazy(() => import("./pages/AdminDoctorsPage"));
+const AdminSlotsPage = lazy(() => import("./pages/AdminSlotsPage"));
+const AdminApprovalsPage = lazy(() => import("./pages/AdminApprovalsPage"));
 const HospitalDetailsPage = lazy(() => import("./pages/HospitalDetailsPage"));
 
 const REMEMBERED_LOGIN_KEY = "rememberedLogin";
@@ -92,13 +96,17 @@ function App() {
   const [hospitals, setHospitals] = useState([]);
   const [compareResults, setCompareResults] = useState([]);
   const [bestResults, setBestResults] = useState([]);
+  const [doctorResults, setDoctorResults] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [adminAppointments, setAdminAppointments] = useState([]);
   const [adminServices, setAdminServices] = useState([]);
   const [adminSlots, setAdminSlots] = useState([]);
+  const [adminDoctors, setAdminDoctors] = useState([]);
   const [hospitalProfile, setHospitalProfile] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [doctorSlots, setDoctorSlots] = useState([]);
 
+  const [searchMode, setSearchMode] = useState("services");
   const [serviceName, setServiceName] = useState("General Consultation");
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
@@ -106,6 +114,7 @@ function App() {
   const [aiRecommendation, setAiRecommendation] = useState(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
 
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({
@@ -119,6 +128,13 @@ function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [serviceForm, setServiceForm] = useState({ serviceName: "", price: "" });
   const [slotForm, setSlotForm] = useState({ serviceName: "", slotDate: "", slotTime: "" });
+  const [doctorForm, setDoctorForm] = useState({
+    name: "",
+    specialization: "",
+    experience: "",
+    consultationFee: "",
+    availability: "09:00,10:00,11:00",
+  });
   const [bookingForm, setBookingForm] = useState({
     userName: "",
     patientAge: "",
@@ -176,6 +192,7 @@ function App() {
       setAdminAppointments([]);
       setAdminServices([]);
       setAdminSlots([]);
+      setAdminDoctors([]);
       setHospitalProfile(null);
       return;
     }
@@ -184,7 +201,8 @@ function App() {
       fetchJson(`${API_BASE_URL}/myHospitalServices`, { headers: buildHeaders(session.token) }),
       fetchJson(`${API_BASE_URL}/myHospitalProfile`, { headers: buildHeaders(session.token) }),
       fetchJson(`${API_BASE_URL}/myHospitalSlots`, { headers: buildHeaders(session.token) }),
-    ]).then(([appointmentsResult, servicesResult, profileResult, slotsResult]) => {
+      fetchJson(`http://localhost:8080/hospitals/${session.hospitalId}/doctors`, { headers: buildHeaders(session.token) }),
+    ]).then(([appointmentsResult, servicesResult, profileResult, slotsResult, doctorsResult]) => {
       if (appointmentsResult.status === "fulfilled") {
         setAdminAppointments(appointmentsResult.value);
       }
@@ -211,10 +229,19 @@ function App() {
             : slotsResult.reason?.message || "Slots could not be loaded.";
         setMessage("error", message);
       }
+
+      if (doctorsResult.status === "fulfilled") {
+        setAdminDoctors(doctorsResult.value);
+      } else {
+        setAdminDoctors([]);
+      }
     });
   }, [isAdmin, session]);
 
   const handleCompare = async (serviceOverride = "") => {
+    setSearchMode("services");
+    setSelectedDoctor(null);
+    setDoctorResults([]);
     const normalized = typeof serviceOverride === "string" ? serviceOverride : "";
     const effective = (normalized || serviceName).trim();
     if (!effective) {
@@ -229,6 +256,37 @@ function App() {
       setCompareResults(data);
       if (data.length === 0) {
         setMessage("success", `No hospitals have "${effective}" yet.`);
+      }
+    } catch (error) {
+      setMessage("error", error.message);
+    }
+  };
+
+  const handleDoctorSearch = async (specializationOverride = "") => {
+    const normalized = typeof specializationOverride === "string" ? specializationOverride : "";
+    const effective = (normalized || serviceName).trim();
+    if (!effective) {
+      setMessage("error", "Please enter a doctor specialization.");
+      return;
+    }
+    setSelectedHospital(null);
+    setSelectedDoctor(null);
+    if (normalized) {
+      setServiceName(effective);
+    }
+    try {
+      const params = new URLSearchParams({ specialization: effective });
+      if (lat !== "" && lon !== "") {
+        params.set("lat", String(Number(lat)));
+        params.set("lon", String(Number(lon)));
+      }
+      const data = await fetchJson(`http://localhost:8080/doctors?${params.toString()}`);
+      setSearchMode("doctors");
+      setDoctorResults(data);
+      setCompareResults([]);
+      setBestResults([]);
+      if (data.length === 0) {
+        setMessage("success", `No doctors found for "${effective}" yet.`);
       }
     } catch (error) {
       setMessage("error", error.message);
@@ -277,12 +335,22 @@ function App() {
     }
     setAiBusy(true);
     try {
+      const extraLocation =
+        lat !== "" && lon !== ""
+          ? `&lat=${Number(lat)}&lon=${Number(lon)}`
+          : "";
       const payload = await fetchJson(
-        `${AI_API_BASE_URL}/recommendDoctor?symptoms=${encodeURIComponent(symptoms.trim())}`,
+        `${AI_API_BASE_URL}/recommendDoctor?symptoms=${encodeURIComponent(symptoms.trim())}${extraLocation}`,
         { headers: buildHeaders(session.token) }
       );
       setAiRecommendation(payload);
+      setDoctorResults(payload?.doctorSuggestions || []);
       setMessage("success", `Recommended doctor: ${payload.recommendedDoctor}`);
+      if (autoCompare && payload?.doctorSuggestions?.length) {
+        setSearchMode("doctors");
+        navigate("/explore");
+        return;
+      }
       const primary = payload?.suggestedServices?.[0];
       if (autoCompare && primary) {
         await handleCompare(primary);
@@ -350,8 +418,9 @@ function App() {
 
   const handleBook = async (event) => {
     event.preventDefault();
-    if (!canBook || !selectedHospital) {
-      setMessage("error", "Select a hospital and login as patient.");
+    const bookingHospital = selectedDoctor?.hospital || selectedHospital;
+    if (!canBook || !bookingHospital) {
+      setMessage("error", "Select a hospital or doctor and login as patient.");
       return;
     }
     if (!bookingForm.date || !bookingForm.time) {
@@ -368,16 +437,18 @@ function App() {
           patientGender: bookingForm.patientGender,
           phoneNumber: bookingForm.phoneNumber,
           patientNotes: bookingForm.patientNotes,
-          serviceName,
+          serviceName: selectedDoctor ? `${selectedDoctor.specialization} Consultation` : serviceName,
           date: bookingForm.date,
           time: bookingForm.time,
-          hospital: { id: selectedHospital.id },
+          hospital: { id: bookingHospital.id },
+          doctor: selectedDoctor ? { id: selectedDoctor.id } : null,
         }),
       });
       const data = await fetchJson(`${API_BASE_URL}/myAppointments`, { headers: buildHeaders(session.token) });
       setAppointments(data);
       setBookingForm((c) => ({ ...c, date: "", time: "" }));
       setAvailableSlots([]);
+      setDoctorSlots([]);
       setMessage("success", "Appointment request sent.");
       navigate("/bookings");
     } catch (error) {
@@ -446,6 +517,32 @@ function App() {
     }
   };
 
+  const handleAddDoctor = async (event) => {
+    event.preventDefault();
+    try {
+      const payload = await fetchJson(`http://localhost:8080/doctors`, {
+        method: "POST",
+        headers: buildHeaders(session.token, { "Content-Type": "application/json" }),
+        body: JSON.stringify(doctorForm),
+      });
+      setAdminDoctors((current) =>
+        [...current, payload].sort(
+          (a, b) => a.specialization.localeCompare(b.specialization) || a.name.localeCompare(b.name)
+        )
+      );
+      setDoctorForm({
+        name: "",
+        specialization: "",
+        experience: "",
+        consultationFee: "",
+        availability: "09:00,10:00,11:00",
+      });
+      setMessage("success", "Doctor added.");
+    } catch (error) {
+      setMessage("error", error.message);
+    }
+  };
+
   const handleDeleteSlot = async (slotId) => {
     try {
       await fetchJson(`${API_BASE_URL}/slots/${slotId}`, {
@@ -454,6 +551,19 @@ function App() {
       });
       setAdminSlots((current) => current.filter((slot) => slot.id !== slotId));
       setMessage("success", "Slot deleted.");
+    } catch (error) {
+      setMessage("error", error.message);
+    }
+  };
+
+  const handleDeleteDoctor = async (doctorId) => {
+    try {
+      await fetchJson(`http://localhost:8080/doctors/${doctorId}`, {
+        method: "DELETE",
+        headers: buildHeaders(session.token),
+      });
+      setAdminDoctors((current) => current.filter((doctor) => doctor.id !== doctorId));
+      setMessage("success", "Doctor deleted.");
     } catch (error) {
       setMessage("error", error.message);
     }
@@ -473,6 +583,21 @@ function App() {
       setAvailableSlots(data);
     } catch (error) {
       setAvailableSlots([]);
+      setMessage("error", error.message);
+    }
+  };
+
+  const loadDoctorSlots = async ({ doctorId, date }) => {
+    if (!doctorId || !date) {
+      setDoctorSlots([]);
+      return;
+    }
+
+    try {
+      const data = await fetchJson(`http://localhost:8080/doctors/${doctorId}/availableSlots?slotDate=${date}`);
+      setDoctorSlots(data.map((time, idx) => ({ id: `${doctorId}-${time}-${idx}`, slotTime: time })));
+    } catch (error) {
+      setDoctorSlots([]);
       setMessage("error", error.message);
     }
   };
@@ -545,6 +670,8 @@ function App() {
                     path="/explore"
                     element={
                       <ExplorePage
+                        searchMode={searchMode}
+                        setSearchMode={setSearchMode}
                         serviceName={serviceName}
                         setServiceName={setServiceName}
                         lat={lat}
@@ -553,19 +680,34 @@ function App() {
                         setLon={setLon}
                         compareResults={compareResults}
                         bestResults={bestResults}
+                        doctorResults={doctorResults}
                         hospitals={hospitals}
                         selectedHospital={selectedHospital}
                         setSelectedHospital={setSelectedHospital}
+                        selectedDoctor={selectedDoctor}
+                        setSelectedDoctor={setSelectedDoctor}
                         bookingForm={bookingForm}
                         setBookingForm={setBookingForm}
                         canBook={canBook}
                         onCompare={() => handleCompare()}
+                        onSearchDoctors={() => handleDoctorSearch()}
                         onBest={handleBest}
                         onGetLocation={handleGetLocation}
                         onBook={handleBook}
                         onSelectAndGoBooking={(hospital) => {
+                          setSelectedDoctor(null);
                           setSelectedHospital(hospital);
                           setAvailableSlots([]);
+                          setDoctorSlots([]);
+                          setSearchMode("services");
+                          navigate("/booking");
+                        }}
+                        onSelectDoctorAndGoBooking={(doctor) => {
+                          setSelectedDoctor(doctor);
+                          setSelectedHospital(doctor.hospital);
+                          setAvailableSlots([]);
+                          setDoctorSlots([]);
+                          setSearchMode("doctors");
                           navigate("/booking");
                         }}
                       />
@@ -586,6 +728,13 @@ function App() {
                             handleCompare(service);
                             navigate("/explore");
                           }}
+                          onBookDoctor={(doctor) => {
+                            setSelectedDoctor(doctor);
+                            setSelectedHospital(doctor.hospital);
+                            setDoctorSlots([]);
+                            setSearchMode("doctors");
+                            navigate("/booking");
+                          }}
                         />
                       </Protected>
                     }
@@ -595,16 +744,22 @@ function App() {
                     element={
                       <BookingPage
                         selectedHospital={selectedHospital}
+                        selectedDoctor={selectedDoctor}
                         serviceName={serviceName}
                         bookingForm={bookingForm}
                         setBookingForm={setBookingForm}
-                        availableSlots={availableSlots}
+                        availableSlots={selectedDoctor ? doctorSlots : availableSlots}
                         onLoadSlots={(date) =>
-                          loadAvailableSlots({
-                            hospitalId: selectedHospital?.id,
-                            service: serviceName,
-                            date,
-                          })
+                          selectedDoctor
+                            ? loadDoctorSlots({
+                                doctorId: selectedDoctor?.id,
+                                date,
+                              })
+                            : loadAvailableSlots({
+                                hospitalId: selectedHospital?.id,
+                                service: serviceName,
+                                date,
+                              })
                         }
                         onSubmit={handleBook}
                         canBook={canBook}
@@ -633,17 +788,74 @@ function App() {
                       <Protected allow={isAdmin}>
                         <AdminDashboardPage
                           hospitalProfile={hospitalProfile}
+                          adminServices={adminServices}
+                          adminDoctors={adminDoctors}
+                          adminAppointments={adminAppointments}
+                        />
+                      </Protected>
+                    }
+                  />
+                  <Route
+                    path="/admin/services"
+                    element={
+                      <Protected allow={isAdmin}>
+                        <AdminServicesPage
+                          hospitalProfile={hospitalProfile}
                           serviceForm={serviceForm}
                           setServiceForm={setServiceForm}
+                          adminServices={adminServices}
+                          adminDoctors={adminDoctors}
+                          adminAppointments={adminAppointments}
+                          onAddService={handleAddService}
+                          onDeleteService={handleDeleteService}
+                        />
+                      </Protected>
+                    }
+                  />
+                  <Route
+                    path="/admin/doctors"
+                    element={
+                      <Protected allow={isAdmin}>
+                        <AdminDoctorsPage
+                          hospitalProfile={hospitalProfile}
+                          doctorForm={doctorForm}
+                          setDoctorForm={setDoctorForm}
+                          adminServices={adminServices}
+                          adminDoctors={adminDoctors}
+                          adminAppointments={adminAppointments}
+                          onAddDoctor={handleAddDoctor}
+                          onDeleteDoctor={handleDeleteDoctor}
+                        />
+                      </Protected>
+                    }
+                  />
+                  <Route
+                    path="/admin/slots"
+                    element={
+                      <Protected allow={isAdmin}>
+                        <AdminSlotsPage
+                          hospitalProfile={hospitalProfile}
                           slotForm={slotForm}
                           setSlotForm={setSlotForm}
                           adminServices={adminServices}
                           adminSlots={adminSlots}
+                          adminDoctors={adminDoctors}
                           adminAppointments={adminAppointments}
-                          onAddService={handleAddService}
                           onAddSlot={handleAddSlot}
-                          onDeleteService={handleDeleteService}
                           onDeleteSlot={handleDeleteSlot}
+                        />
+                      </Protected>
+                    }
+                  />
+                  <Route
+                    path="/admin/approvals"
+                    element={
+                      <Protected allow={isAdmin}>
+                        <AdminApprovalsPage
+                          hospitalProfile={hospitalProfile}
+                          adminServices={adminServices}
+                          adminDoctors={adminDoctors}
+                          adminAppointments={adminAppointments}
                           onUpdateStatus={handleUpdateStatus}
                           onRefresh={refreshAdminAppointments}
                         />
@@ -657,8 +869,18 @@ function App() {
                         hospitals={hospitals}
                         compareResults={compareResults}
                         onBookNow={(hospital) => {
-                          setSelectedHospital(hospital);
+                          setSelectedDoctor(null);
+                            setSelectedHospital(hospital);
+                            setAvailableSlots([]);
+                          setDoctorSlots([]);
+                          navigate("/booking");
+                        }}
+                        onBookDoctor={(doctor) => {
+                          setSelectedDoctor(doctor);
+                          setSelectedHospital(doctor.hospital);
                           setAvailableSlots([]);
+                          setDoctorSlots([]);
+                          setSearchMode("doctors");
                           navigate("/booking");
                         }}
                       />

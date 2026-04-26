@@ -1,4 +1,4 @@
-import { Bot, CalendarCheck2, Compass, House, Hospital, ShieldCheck } from "lucide-react";
+import { Bot, CalendarCheck2, Compass, House, Hospital, ShieldCheck, ShieldPlus, Stethoscope, TimerReset, CalendarClock } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useI18n } from "../../i18n/I18nProvider";
 
@@ -8,6 +8,13 @@ const links = [
   { to: "/ai", key: "nav.ai", icon: Bot },
   { to: "/bookings", key: "nav.bookings", icon: CalendarCheck2 },
   { to: "/admin", key: "nav.admin", icon: ShieldCheck, adminOnly: true },
+];
+
+const adminWorkspaceLinks = [
+  { to: "/admin/services", label: "Services", icon: ShieldPlus },
+  { to: "/admin/doctors", label: "Doctors", icon: Stethoscope },
+  { to: "/admin/slots", label: "Slots", icon: TimerReset },
+  { to: "/admin/approvals", label: "Approvals", icon: CalendarClock },
 ];
 
 export default function Sidebar({ session }) {
@@ -43,6 +50,35 @@ export default function Sidebar({ session }) {
               </NavLink>
             );
           })}
+
+        {session?.role === "ADMIN" ? (
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+            <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Admin Workspace
+            </p>
+            <div className="space-y-1">
+              {adminWorkspaceLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                        isActive
+                          ? "bg-white text-brand-800 shadow-sm ring-1 ring-brand-100"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900"
+                      }`
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{link.label}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </nav>
     </aside>
   );

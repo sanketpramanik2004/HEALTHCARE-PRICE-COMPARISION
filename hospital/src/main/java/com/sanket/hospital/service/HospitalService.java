@@ -1,6 +1,7 @@
 package com.sanket.hospital.service;
 
 import com.sanket.hospital.entity.Appointment;
+import com.sanket.hospital.entity.Doctor;
 import com.sanket.hospital.entity.Hospital;
 import com.sanket.hospital.entity.HospitalSlot;
 import com.sanket.hospital.entity.ServiceEntity;
@@ -97,23 +98,43 @@ public class HospitalService {
     @Autowired
     private HospitalSlotRepository hospitalSlotRepository;
 
+    @Autowired
+    private DoctorService doctorService;
+
     public Appointment bookAppointment(Appointment appointment) {
         if (appointment.getHospital() == null || appointment.getHospital().getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hospital is required for booking.");
-        }
-        if (appointment.getServiceName() == null || appointment.getServiceName().isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Service name is required for booking.");
         }
         if (appointment.getDate() == null || appointment.getTime() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please select a valid booking slot.");
         }
 
-        String normalizedService = appointment.getServiceName().trim();
         Long hospitalId = appointment.getHospital().getId();
-        validateSlotAvailability(hospitalId, normalizedService, appointment.getDate(), appointment.getTime());
+        Hospital hospital = getHospitalById(hospitalId);
+
+        Doctor doctor = null;
+        if (appointment.getDoctor() != null && appointment.getDoctor().getId() != null) {
+            doctor = doctorService.getDoctorById(appointment.getDoctor().getId());
+            doctorService.validateDoctorBooking(doctor, hospital, appointment.getDate(), appointment.getTime());
+            appointment.setDoctor(doctor);
+
+            String doctorServiceName = doctor.getSpecialization() + " Consultation";
+            if (appointment.getServiceName() == null || appointment.getServiceName().isBlank()) {
+                appointment.setServiceName(doctorServiceName);
+            }
+        }
+
+        if (appointment.getServiceName() == null || appointment.getServiceName().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Service name is required for booking.");
+        }
+
+        String normalizedService = appointment.getServiceName().trim();
+        if (doctor == null) {
+            validateSlotAvailability(hospitalId, normalizedService, appointment.getDate(), appointment.getTime());
+        }
 
         appointment.setServiceName(normalizedService);
-        appointment.setHospital(getHospitalById(hospitalId));
+        appointment.setHospital(hospital);
         appointment.setStatus("PENDING");
         return appointmentRepository.save(appointment);
     }
