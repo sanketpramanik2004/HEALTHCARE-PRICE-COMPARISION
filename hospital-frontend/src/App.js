@@ -422,10 +422,37 @@ function App() {
     setUi((c) => ({ ...c, busy: true }));
     try {
       if (authMode === "register") {
+        const normalizedEmail = authForm.email.trim().toLowerCase();
+
+        if (!normalizedEmail) {
+          throw new Error("Email is required.");
+        }
+
+        if (!authForm.password.trim()) {
+          throw new Error("Password is required.");
+        }
+
+        if (authForm.role === "ADMIN") {
+          const latitude = Number(authForm.hospital.latitude);
+          const longitude = Number(authForm.hospital.longitude);
+          const rating = Number(authForm.hospital.rating);
+
+          if (!authForm.hospital.name.trim() || !authForm.hospital.location.trim()) {
+            throw new Error("Hospital name and location are required.");
+          }
+
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(rating)) {
+            throw new Error("Hospital latitude, longitude, and rating must be valid numbers.");
+          }
+        } else if (!authForm.name.trim()) {
+          throw new Error("Name is required.");
+        }
+
         const payload =
           authForm.role === "ADMIN"
             ? {
                 ...authForm,
+                email: normalizedEmail,
                 age: authForm.age ? Number(authForm.age) : null,
                 hospital: {
                   ...authForm.hospital,
@@ -436,6 +463,7 @@ function App() {
               }
             : {
                 ...authForm,
+                email: normalizedEmail,
                 age: authForm.age ? Number(authForm.age) : null,
                 hospital: null,
               };
