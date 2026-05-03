@@ -1,6 +1,5 @@
 package com.sanket.hospital.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.ArrayList;
@@ -23,12 +22,11 @@ public class User {
     private String phoneNumber;
     private String authProvider;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "hospital_id")
     private Hospital hospital;
 
-    @JsonIgnore
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<MedicalHistory> medicalHistoryEntries = new ArrayList<>();
 }
