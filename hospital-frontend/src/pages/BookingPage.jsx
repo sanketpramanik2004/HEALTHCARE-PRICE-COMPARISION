@@ -38,7 +38,7 @@ export default function BookingPage({
     <div className="space-y-6">
       <Card className="bg-mesh">
         <p className="text-xs uppercase tracking-[0.2em] text-brand-700">Step {step} of 2</p>
-        <h2 className="mt-2 text-2xl font-bold">Book at {selectedHospital.name}</h2>
+        <h2 className="mt-2 break-words text-2xl font-bold">Book at {selectedHospital.name}</h2>
         <div className="mt-4 flex flex-wrap gap-3 text-sm text-slate-600">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5">
             <Stethoscope className="h-4 w-4 text-brand-700" />
@@ -107,6 +107,7 @@ export default function BookingPage({
                   onChange={(e) => setBookingForm((c) => ({ ...c, patientNotes: e.target.value }))}
                 />
                 <Button
+                  className="w-full sm:w-auto"
                   onClick={() => setStep(2)}
                   disabled={
                     !bookingForm.userName.trim() ||
@@ -165,11 +166,11 @@ export default function BookingPage({
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" type="button" onClick={() => setStep(1)}>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button className="w-full sm:w-auto" variant="ghost" type="button" onClick={() => setStep(1)}>
                     Back
                   </Button>
-                  <Button type="submit" disabled={!bookingForm.date || !bookingForm.time}>
+                  <Button className="w-full sm:w-auto" type="submit" disabled={!bookingForm.date || !bookingForm.time}>
                     Confirm Booking
                   </Button>
                 </div>
@@ -252,9 +253,9 @@ function InfoCard({ icon: Icon, title, text }) {
 
 function SummaryRow({ label, value }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-2">
+    <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <span className="text-slate-500">{label}</span>
-      <span className="text-right font-medium text-slate-800">{value}</span>
+      <span className="break-words text-left font-medium text-slate-800 sm:text-right">{value}</span>
     </div>
   );
 }

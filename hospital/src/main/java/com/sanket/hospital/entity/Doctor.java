@@ -20,6 +20,8 @@ public class Doctor {
     private Integer experience;
 
     private double consultationFee;
+    private double averageRating;
+    private Integer reviewCount = 0;
 
     @Column(length = 500)
     private String availability;

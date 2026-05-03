@@ -56,7 +56,11 @@ public class HospitalService {
         String normalizedEmail = user.getEmail().trim().toLowerCase();
         user.setEmail(normalizedEmail);
         user.setRole(user.getRole() == null || user.getRole().isBlank() ? "USER" : user.getRole());
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required.");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setAuthProvider(user.getAuthProvider() == null || user.getAuthProvider().isBlank() ? "LOCAL" : user.getAuthProvider());
 
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "An account with this email already exists.");
@@ -72,6 +76,9 @@ public class HospitalService {
             user.setHospital(repository.save(hospital));
         } else {
             user.setHospital(null);
+            if (user.getName() == null || user.getName().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is required for patient registration.");
+            }
         }
 
         return userRepository.save(user);
@@ -80,11 +87,11 @@ public class HospitalService {
     public User login(String email, String password) {
         User user = userRepository.findTopByEmailOrderByIdDesc(email.trim().toLowerCase());
 
-        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
+        if (user != null && user.getPassword() != null && passwordEncoder.matches(password, user.getPassword())) {
             return user;
         }
 
-        if (user != null && password.equals(user.getPassword())) {
+        if (user != null && user.getPassword() != null && password.equals(user.getPassword())) {
             user.setPassword(passwordEncoder.encode(password));
             return userRepository.save(user);
         }
@@ -111,6 +118,10 @@ public class HospitalService {
 
         Long hospitalId = appointment.getHospital().getId();
         Hospital hospital = getHospitalById(hospitalId);
+        User user = userRepository.findByEmail(appointment.getUserEmail());
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please sign in before booking.");
+        }
 
         Doctor doctor = null;
         if (appointment.getDoctor() != null && appointment.getDoctor().getId() != null) {
@@ -135,6 +146,19 @@ public class HospitalService {
 
         appointment.setServiceName(normalizedService);
         appointment.setHospital(hospital);
+        appointment.setUser(user);
+        if (appointment.getUserName() == null || appointment.getUserName().isBlank()) {
+            appointment.setUserName(user.getName());
+        }
+        if (appointment.getPatientAge() == null) {
+            appointment.setPatientAge(user.getAge());
+        }
+        if (appointment.getPatientGender() == null || appointment.getPatientGender().isBlank()) {
+            appointment.setPatientGender(user.getGender());
+        }
+        if (appointment.getPhoneNumber() == null || appointment.getPhoneNumber().isBlank()) {
+            appointment.setPhoneNumber(user.getPhoneNumber());
+        }
         appointment.setStatus("PENDING");
         return appointmentRepository.save(appointment);
     }
@@ -156,7 +180,7 @@ public class HospitalService {
 
             String normalizedStatus = status == null ? "" : status.trim().toUpperCase();
             if (!"CONFIRMED".equals(normalizedStatus) && !"REJECTED".equals(normalizedStatus)
-                    && !"PENDING".equals(normalizedStatus)) {
+                    && !"PENDING".equals(normalizedStatus) && !"COMPLETED".equals(normalizedStatus)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid appointment status.");
             }
 
@@ -176,6 +200,30 @@ public class HospitalService {
                     logger.warn("Appointment confirmed but confirmation email failed for appointmentId={}", appt.getId(),
                             ex);
                 }
+            } else if ("REJECTED".equals(normalizedStatus)) {
+                try {
+                    emailService.sendEmail(
+                            appt.getUserEmail(),
+                            "Appointment Update",
+                            "Your appointment for " + appt.getServiceName() +
+                                    " at " + appt.getHospital().getName() +
+                                    " was REJECTED. Please choose another slot or hospital.");
+                } catch (Exception ex) {
+                    logger.warn("Appointment rejected but rejection email failed for appointmentId={}", appt.getId(),
+                            ex);
+                }
+            } else if ("COMPLETED".equals(normalizedStatus)) {
+                try {
+                    emailService.sendEmail(
+                            appt.getUserEmail(),
+                            "Appointment Completed",
+                            "Your appointment for " + appt.getServiceName() +
+                                    " at " + appt.getHospital().getName() +
+                                    " has been marked COMPLETED. You can now leave a review in your profile.");
+                } catch (Exception ex) {
+                    logger.warn("Appointment completed but follow-up email failed for appointmentId={}", appt.getId(),
+                            ex);
+                }
             }
 
             return saved;
@@ -189,6 +237,10 @@ public class HospitalService {
     }
 
     public List<Appointment> getAppointmentsByUserEmail(String userEmail) {
+        User user = userRepository.findByEmail(userEmail);
+        if (user != null) {
+            return appointmentRepository.findByUser_IdOrderByDateDescTimeDesc(user.getId());
+        }
         return appointmentRepository.findByUserEmailOrderByDateDescTimeDesc(userEmail);
     }
 

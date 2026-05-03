@@ -1,5 +1,6 @@
 package com.sanket.hospital.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -34,7 +35,12 @@ public class Appointment {
     private String userEmail;
 
     @Column(name = "status")
-    private String status; // PENDING, CONFIRMED, REJECTED
+    private String status; // PENDING, CONFIRMED, REJECTED, COMPLETED
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "doctor_id")

@@ -16,4 +16,5 @@ public class Hospital {
     private double latitude;
     private double longitude;
     private double rating;
+    private Integer reviewCount = 0;
 }

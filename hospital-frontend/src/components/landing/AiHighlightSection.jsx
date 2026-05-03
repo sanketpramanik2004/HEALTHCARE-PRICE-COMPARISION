@@ -6,11 +6,11 @@ import { useI18n } from "../../i18n/I18nProvider";
 export default function AiHighlightSection({ session }) {
   const { t } = useI18n();
   return (
-    <section className="mx-auto max-w-7xl px-4 py-14 lg:px-6">
-      <div className="grid gap-6 rounded-3xl bg-gradient-to-r from-brand-900 to-brand-700 p-6 text-white md:p-8 lg:grid-cols-[1fr,1.15fr]">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:py-14 lg:px-6">
+      <div className="grid gap-5 rounded-3xl bg-gradient-to-r from-brand-900 to-brand-700 p-5 text-white sm:gap-6 sm:p-6 md:p-8 lg:grid-cols-[1fr,1.15fr]">
         <motion.div initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">{t("home.aiHighlight")}</p>
-          <h2 className="mt-2 text-3xl font-bold">{t("home.aiHighlightTitle")}</h2>
+          <h2 className="mt-2 text-2xl font-bold sm:text-3xl">{t("home.aiHighlightTitle")}</h2>
           <p className="mt-3 text-white/85">
             {t("home.aiHighlightText")}
           </p>

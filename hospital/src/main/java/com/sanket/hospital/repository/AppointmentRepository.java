@@ -12,6 +12,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     List<Appointment> findByUserEmailOrderByDateDescTimeDesc(String userEmail);
 
+    List<Appointment> findByUser_IdOrderByDateDescTimeDesc(Long userId);
+
     boolean existsByHospital_IdAndServiceNameIgnoreCaseAndDateAndTimeAndStatusIn(
             Long hospitalId,
             String serviceName,
@@ -28,5 +30,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     boolean existsByDoctor_IdAndStatusIn(
             Long doctorId,
             List<String> statuses);
+
+    long countByStatus(String status);
 
 }

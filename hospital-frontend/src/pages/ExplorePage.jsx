@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import HospitalMap from "../components/map/HospitalMap";
@@ -40,7 +41,7 @@ export default function ExplorePage({
 
   return (
     <div className="grid gap-6 xl:grid-cols-[340px,1fr]">
-      <Card className="space-y-4">
+      <Card className="space-y-4 xl:sticky xl:top-6">
         <h2 className="text-xl font-semibold">{t("explore.title")}</h2>
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
           <button
@@ -68,7 +69,7 @@ export default function ExplorePage({
           onChange={(e) => setServiceName(e.target.value)}
           placeholder={searchMode === "doctors" ? "Cardiologist, Dermatologist..." : t("explore.servicePlaceholder")}
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <input
             className="rounded-xl border border-slate-200 bg-white px-4 py-3"
             value={lat}
@@ -132,14 +133,14 @@ export default function ExplorePage({
             <p className="mt-1 text-sm text-slate-600">
               {t("explore.bestMatch").replace("{{service}}", highlighted.serviceName)}
             </p>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+            <div className="mt-3 flex flex-col gap-3 text-sm sm:flex-row sm:flex-wrap">
               <span className="rounded-lg bg-white px-3 py-1.5">₹{highlighted.price}</span>
               {hasLocation && (
                 <span className="rounded-lg bg-white px-3 py-1.5">
                   {calculateDistance(Number(lat), Number(lon), highlighted.hospital.latitude, highlighted.hospital.longitude).toFixed(2)} km
                 </span>
               )}
-              <Button variant="secondary" onClick={() => onSelectAndGoBooking(highlighted.hospital)}>
+              <Button variant="secondary" className="w-full sm:w-auto" onClick={() => onSelectAndGoBooking(highlighted.hospital)}>
                 {t("explore.bookHospital")}
               </Button>
             </div>
@@ -172,23 +173,33 @@ export default function ExplorePage({
             ) : (
               doctorResults.map((doctor) => (
                 <Card key={doctor.id} className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="font-semibold">Dr. {doctor.name}</h4>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="break-words font-semibold">Dr. {doctor.name}</h4>
                       <p className="text-sm text-slate-500">{doctor.specialization}</p>
                     </div>
-                    <span className="rounded-lg bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-800">
+                    <span className="shrink-0 rounded-lg bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-800">
                       ₹{doctor.consultationFee}
                     </span>
                   </div>
                   <div className="text-sm text-slate-600">
                     <p>Experience: {doctor.experience || 0} years</p>
                     <p>Hospital: {doctor.hospital.name}</p>
-                    <p>Rating: {doctor.hospital.rating}</p>
+                    <p className="inline-flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      {doctor.averageRating?.toFixed?.(1) || "0.0"} doctor rating
+                      {doctor.reviewCount ? ` (${doctor.reviewCount})` : ""}
+                    </p>
+                    <p className="inline-flex items-center gap-1">
+                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                      {doctor.hospital.rating?.toFixed?.(1) || "0.0"} hospital rating
+                      {doctor.hospital.reviewCount ? ` (${doctor.hospital.reviewCount})` : ""}
+                    </p>
                     {hasLocation ? <p>Distance: {doctor.distanceKm.toFixed(2)} km</p> : null}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <Button
+                      className="w-full sm:w-auto"
                       onClick={() => {
                         setSelectedDoctor(doctor);
                         setSelectedHospital(doctor.hospital);
@@ -197,7 +208,7 @@ export default function ExplorePage({
                     >
                       Book Appointment
                     </Button>
-                    <Link to={`/hospitals/${doctor.hospital.id}`}>
+                    <Link to={`/hospitals/${doctor.hospital.id}`} className="w-full sm:w-auto">
                       <Button variant="ghost">{t("explore.details")}</Button>
                     </Link>
                   </div>
@@ -212,27 +223,32 @@ export default function ExplorePage({
           ) : (
             compareResults.map((result) => (
               <Card key={`${result.hospital.id}-${result.serviceName}-${result.price}`} className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-semibold">{result.hospital.name}</h4>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="break-words font-semibold">{result.hospital.name}</h4>
                     <p className="text-sm text-slate-500">{result.hospital.location}</p>
                   </div>
-                  <span className="rounded-lg bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-800">₹{result.price}</span>
+                  <span className="shrink-0 rounded-lg bg-brand-100 px-3 py-1 text-sm font-semibold text-brand-800">₹{result.price}</span>
                 </div>
                 <div className="text-sm text-slate-600">
                   <p>{t("explore.service")}: {result.serviceName}</p>
-                  <p>{t("explore.rating")}: {result.hospital.rating}</p>
+                  <p className="inline-flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    {t("explore.rating")}: {result.hospital.rating?.toFixed?.(1) || "0.0"}
+                    {result.hospital.reviewCount ? ` (${result.hospital.reviewCount})` : ""}
+                  </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => onSelectAndGoBooking(result.hospital)}>{t("explore.book")}</Button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button className="w-full sm:w-auto" onClick={() => onSelectAndGoBooking(result.hospital)}>{t("explore.book")}</Button>
                   <a
+                    className="w-full sm:w-auto"
                     href={`https://www.google.com/maps/dir/?api=1&destination=${result.hospital.latitude},${result.hospital.longitude}`}
                     target="_blank"
                     rel="noreferrer"
                   >
                     <Button variant="ghost">{t("explore.directions")}</Button>
                   </a>
-                  <Link to={`/hospitals/${result.hospital.id}`}>
+                  <Link to={`/hospitals/${result.hospital.id}`} className="w-full sm:w-auto">
                     <Button variant="ghost">{t("explore.details")}</Button>
                   </Link>
                 </div>

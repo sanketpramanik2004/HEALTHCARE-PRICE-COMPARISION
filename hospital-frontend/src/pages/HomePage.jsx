@@ -1,7 +1,7 @@
 import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
+import FlowSection from "../components/landing/FlowSection";
 import StatsSection from "../components/landing/StatsSection";
-import HowItWorksSection from "../components/landing/HowItWorksSection";
 import FeaturesSection from "../components/landing/FeaturesSection";
 import AiHighlightSection from "../components/landing/AiHighlightSection";
 import ProductPreviewSection from "../components/landing/ProductPreviewSection";
@@ -10,11 +10,11 @@ import FooterSection from "../components/landing/FooterSection";
 
 export default function HomePage({ session, hospitals }) {
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-slate-50">
       <LandingNavbar session={session} />
       <HeroSection session={session} />
+      <FlowSection />
       <StatsSection hospitals={hospitals} />
-      <HowItWorksSection />
       <FeaturesSection />
       <AiHighlightSection session={session} />
       <ProductPreviewSection />

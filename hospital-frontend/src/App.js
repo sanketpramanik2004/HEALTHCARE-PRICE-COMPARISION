@@ -7,6 +7,7 @@ import Skeleton from "./components/ui/Skeleton";
 import {
   AI_API_BASE_URL,
   API_BASE_URL,
+  DOCTOR_API_BASE_URL,
   buildHeaders,
   fetchJson,
 } from "./lib/api";
@@ -23,6 +24,7 @@ const AdminDoctorsPage = lazy(() => import("./pages/AdminDoctorsPage"));
 const AdminSlotsPage = lazy(() => import("./pages/AdminSlotsPage"));
 const AdminApprovalsPage = lazy(() => import("./pages/AdminApprovalsPage"));
 const HospitalDetailsPage = lazy(() => import("./pages/HospitalDetailsPage"));
+const UserProfilePage = lazy(() => import("./pages/UserProfilePage"));
 
 const REMEMBERED_LOGIN_KEY = "rememberedLogin";
 
@@ -33,6 +35,9 @@ function readSession() {
   const email = localStorage.getItem("email");
   const hospitalId = localStorage.getItem("hospitalId");
   const hospitalName = localStorage.getItem("hospitalName");
+  const age = localStorage.getItem("age");
+  const gender = localStorage.getItem("gender");
+  const phoneNumber = localStorage.getItem("phoneNumber");
   if (!token || !role || !email) {
     return null;
   }
@@ -43,6 +48,9 @@ function readSession() {
     email,
     hospitalId: hospitalId ? Number(hospitalId) : null,
     hospitalName: hospitalName || "",
+    age: age ? Number(age) : null,
+    gender: gender || "",
+    phoneNumber: phoneNumber || "",
   };
 }
 
@@ -70,6 +78,9 @@ function saveSession(session) {
   localStorage.setItem("email", session.email);
   localStorage.setItem("hospitalId", session.hospitalId ?? "");
   localStorage.setItem("hospitalName", session.hospitalName ?? "");
+  localStorage.setItem("age", session.age ?? "");
+  localStorage.setItem("gender", session.gender ?? "");
+  localStorage.setItem("phoneNumber", session.phoneNumber ?? "");
 }
 
 function clearSession() {
@@ -79,6 +90,9 @@ function clearSession() {
   localStorage.removeItem("email");
   localStorage.removeItem("hospitalId");
   localStorage.removeItem("hospitalName");
+  localStorage.removeItem("age");
+  localStorage.removeItem("gender");
+  localStorage.removeItem("phoneNumber");
 }
 
 function Protected({ allow, children }) {
@@ -122,6 +136,9 @@ function App() {
     email: remembered.email,
     password: remembered.password,
     role: "USER",
+    age: "",
+    gender: "",
+    phoneNumber: "",
     hospital: { name: "", location: "", latitude: "", longitude: "", rating: "" },
   });
   const [rememberLogin, setRememberLogin] = useState(remembered.remember);
@@ -136,10 +153,10 @@ function App() {
     availability: "09:00,10:00,11:00",
   });
   const [bookingForm, setBookingForm] = useState({
-    userName: "",
-    patientAge: "",
-    patientGender: "",
-    phoneNumber: "",
+    userName: readSession()?.name || "",
+    patientAge: readSession()?.age ?? "",
+    patientGender: readSession()?.gender || "",
+    phoneNumber: readSession()?.phoneNumber || "",
     patientNotes: "",
     date: "",
     time: "",
@@ -151,6 +168,43 @@ function App() {
   const setMessage = (type, message) => {
     setUi((c) => ({ ...c, error: type === "error" ? message : "", success: type === "success" ? message : "" }));
   };
+
+  const applySessionProfile = (payload) => {
+    setSession((current) => {
+      if (!current) return current;
+      const next = {
+        ...current,
+        name: payload.name ?? current.name,
+        age: payload.age ?? current.age ?? null,
+        gender: payload.gender ?? current.gender ?? "",
+        phoneNumber: payload.phoneNumber ?? current.phoneNumber ?? "",
+      };
+      saveSession(next);
+      return next;
+    });
+
+    setBookingForm((current) => ({
+      ...current,
+      userName: payload.name ?? current.userName,
+      patientAge: payload.age ?? current.patientAge ?? "",
+      patientGender: payload.gender ?? current.patientGender ?? "",
+      phoneNumber: payload.phoneNumber ?? current.phoneNumber ?? "",
+    }));
+  };
+
+  useEffect(() => {
+    if (!session || session.role !== "USER") {
+      return;
+    }
+
+    setBookingForm((current) => ({
+      ...current,
+      userName: current.userName || session.name || "",
+      patientAge: current.patientAge || session.age || "",
+      patientGender: current.patientGender || session.gender || "",
+      phoneNumber: current.phoneNumber || session.phoneNumber || "",
+    }));
+  }, [session]);
 
   useEffect(() => {
     let ignore = false;
@@ -201,7 +255,7 @@ function App() {
       fetchJson(`${API_BASE_URL}/myHospitalServices`, { headers: buildHeaders(session.token) }),
       fetchJson(`${API_BASE_URL}/myHospitalProfile`, { headers: buildHeaders(session.token) }),
       fetchJson(`${API_BASE_URL}/myHospitalSlots`, { headers: buildHeaders(session.token) }),
-      fetchJson(`http://localhost:8080/hospitals/${session.hospitalId}/doctors`, { headers: buildHeaders(session.token) }),
+      fetchJson(`${API_BASE_URL}/${session.hospitalId}/doctors`, { headers: buildHeaders(session.token) }),
     ]).then(([appointmentsResult, servicesResult, profileResult, slotsResult, doctorsResult]) => {
       if (appointmentsResult.status === "fulfilled") {
         setAdminAppointments(appointmentsResult.value);
@@ -280,7 +334,7 @@ function App() {
         params.set("lat", String(Number(lat)));
         params.set("lon", String(Number(lon)));
       }
-      const data = await fetchJson(`http://localhost:8080/doctors?${params.toString()}`);
+      const data = await fetchJson(`${DOCTOR_API_BASE_URL}?${params.toString()}`);
       setSearchMode("doctors");
       setDoctorResults(data);
       setCompareResults([]);
@@ -372,6 +426,7 @@ function App() {
           authForm.role === "ADMIN"
             ? {
                 ...authForm,
+                age: authForm.age ? Number(authForm.age) : null,
                 hospital: {
                   ...authForm.hospital,
                   latitude: Number(authForm.hospital.latitude),
@@ -379,7 +434,11 @@ function App() {
                   rating: Number(authForm.hospital.rating),
                 },
               }
-            : { ...authForm, hospital: null };
+            : {
+                ...authForm,
+                age: authForm.age ? Number(authForm.age) : null,
+                hospital: null,
+              };
 
         await fetchJson(`${API_BASE_URL}/register`, {
           method: "POST",
@@ -406,9 +465,41 @@ function App() {
       }
       saveSession(payload);
       setSession(payload);
-      setBookingForm((c) => ({ ...c, userName: payload.name || "" }));
+      setBookingForm((c) => ({
+        ...c,
+        userName: payload.name || "",
+        patientAge: payload.age ?? "",
+        patientGender: payload.gender || "",
+        phoneNumber: payload.phoneNumber || "",
+      }));
       navigate(payload.role === "ADMIN" ? "/admin" : "/dashboard");
       setMessage("success", "Signed in successfully.");
+    } catch (error) {
+      setMessage("error", error.message);
+    } finally {
+      setUi((c) => ({ ...c, busy: false }));
+    }
+  };
+
+  const handleGoogleLogin = async (credential) => {
+    setUi((c) => ({ ...c, busy: true }));
+    try {
+      const payload = await fetchJson(`${API_BASE_URL}/google-login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      saveSession(payload);
+      setSession(payload);
+      setBookingForm((c) => ({
+        ...c,
+        userName: payload.name || "",
+        patientAge: payload.age ?? "",
+        patientGender: payload.gender || "",
+        phoneNumber: payload.phoneNumber || "",
+      }));
+      navigate("/dashboard");
+      setMessage("success", "Signed in with Google successfully.");
     } catch (error) {
       setMessage("error", error.message);
     } finally {
@@ -520,7 +611,7 @@ function App() {
   const handleAddDoctor = async (event) => {
     event.preventDefault();
     try {
-      const payload = await fetchJson(`http://localhost:8080/doctors`, {
+      const payload = await fetchJson(DOCTOR_API_BASE_URL, {
         method: "POST",
         headers: buildHeaders(session.token, { "Content-Type": "application/json" }),
         body: JSON.stringify(doctorForm),
@@ -558,7 +649,7 @@ function App() {
 
   const handleDeleteDoctor = async (doctorId) => {
     try {
-      await fetchJson(`http://localhost:8080/doctors/${doctorId}`, {
+      await fetchJson(`${DOCTOR_API_BASE_URL}/${doctorId}`, {
         method: "DELETE",
         headers: buildHeaders(session.token),
       });
@@ -594,7 +685,7 @@ function App() {
     }
 
     try {
-      const data = await fetchJson(`http://localhost:8080/doctors/${doctorId}/availableSlots?slotDate=${date}`);
+      const data = await fetchJson(`${DOCTOR_API_BASE_URL}/${doctorId}/availableSlots?slotDate=${date}`);
       setDoctorSlots(data.map((time, idx) => ({ id: `${doctorId}-${time}-${idx}`, slotTime: time })));
     } catch (error) {
       setDoctorSlots([]);
@@ -662,6 +753,8 @@ function App() {
                         rememberLogin={rememberLogin}
                         setRememberLogin={setRememberLogin}
                         onSubmit={handleAuthSubmit}
+                        onGoogleSignIn={handleGoogleLogin}
+                        googleClientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ""}
                         busy={ui.busy}
                       />
                     }
@@ -779,6 +872,14 @@ function App() {
                     element={
                       <Protected allow={canBook}>
                         <UserDashboardPage appointments={appointments} />
+                      </Protected>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <Protected allow={canBook}>
+                        <UserProfilePage session={session} onSessionUpdate={applySessionProfile} />
                       </Protected>
                     }
                   />

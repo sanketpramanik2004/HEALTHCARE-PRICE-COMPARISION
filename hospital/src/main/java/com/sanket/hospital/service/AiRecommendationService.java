@@ -61,7 +61,8 @@ public class AiRecommendationService {
                                 service.getHospital().getLocation(),
                                 service.getHospital().getLatitude(),
                                 service.getHospital().getLongitude(),
-                                service.getHospital().getRating())))
+                                service.getHospital().getRating(),
+                                service.getHospital().getReviewCount() == null ? 0 : service.getHospital().getReviewCount())))
                 .toList();
 
         return new AiDoctorSuggestionResponse(

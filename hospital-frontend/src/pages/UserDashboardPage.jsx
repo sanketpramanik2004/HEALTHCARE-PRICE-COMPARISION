@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { CalendarClock, CircleCheckBig, Clock3, Filter, MapPin, ShieldX } from "lucide-react";
+import { CalendarClock, CircleCheckBig, Clock3, Filter, MapPin, ShieldX, NotebookPen } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
 import EmptyState from "../components/ui/EmptyState";
 import Button from "../components/ui/Button";
@@ -16,6 +17,7 @@ export default function UserDashboardPage({ appointments }) {
       confirmed: appointments.filter((a) => a.status === "CONFIRMED").length,
       pending: appointments.filter((a) => a.status === "PENDING").length,
       rejected: appointments.filter((a) => a.status === "REJECTED").length,
+      completed: appointments.filter((a) => a.status === "COMPLETED").length,
     };
   }, [appointments]);
 
@@ -53,7 +55,7 @@ export default function UserDashboardPage({ appointments }) {
                 <p className="text-sm font-semibold">{t("userDashboard.filter")}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {["ALL", "PENDING", "CONFIRMED", "REJECTED"].map((status) => (
+                {["ALL", "PENDING", "CONFIRMED", "COMPLETED", "REJECTED"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
@@ -67,6 +69,8 @@ export default function UserDashboardPage({ appointments }) {
                       ? t("userDashboard.all")
                       : status === "PENDING"
                       ? t("userDashboard.pending")
+                      : status === "COMPLETED"
+                      ? "Completed"
                       : status === "CONFIRMED"
                       ? t("userDashboard.confirmed")
                       : t("userDashboard.rejected")}
@@ -113,6 +117,13 @@ export default function UserDashboardPage({ appointments }) {
                       <Button variant="ghost" className="!px-3 !py-2 text-xs">
                         {t("userDashboard.viewDetails")}
                       </Button>
+                      {appt.status === "COMPLETED" ? (
+                        <Link to="/profile">
+                          <Button className="!px-3 !py-2 text-xs">
+                            Leave Review
+                          </Button>
+                        </Link>
+                      ) : null}
                     </div>
                   </Card>
                 </motion.div>
@@ -154,6 +165,23 @@ export default function UserDashboardPage({ appointments }) {
               <li>{t("userDashboard.tip3")}</li>
             </ul>
           </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl bg-brand-50 p-2 text-brand-700">
+                <NotebookPen className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Profile & history</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  Keep your medical history updated and add reviews after completed visits.
+                </p>
+                <Link to="/profile" className="mt-3 inline-block text-sm font-semibold text-brand-700">
+                  Open patient profile
+                </Link>
+              </div>
+            </div>
+          </Card>
         </aside>
       </div>
     </div>
@@ -174,6 +202,9 @@ function Metric({ icon: Icon, label, value }) {
 
 function StatusPill({ status, labels }) {
   const style =
+    status === "COMPLETED"
+      ? "bg-sky-100 text-sky-700"
+      :
     status === "CONFIRMED"
       ? "bg-emerald-100 text-emerald-700"
       : status === "REJECTED"

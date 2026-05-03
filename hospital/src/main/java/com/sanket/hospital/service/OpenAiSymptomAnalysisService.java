@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,9 @@ public class OpenAiSymptomAnalysisService {
                                     "Symptoms: " + normalizedSymptoms
                                             + "\nReturn JSON exactly in this shape:"
                                             + "\n{\"doctorSpecialization\":\"...\",\"serviceKeywords\":[\"...\",\"...\"],\"reasoningSummary\":\"...\"}"
-                                            + "\nKeep service keywords short and practical for hospital service search.")));
+                                            + "\nUse only hospital-bookable service names or common diagnostic service names."
+                                            + "\nAvoid symptom phrases like 'chest pain' or broad labels like 'evaluation'."
+                                            + "\nPrefer terms like 'Cardiology Consultation', 'ECG', 'ECHO', 'CBC', 'X-Ray', 'MRI', 'Ultrasound', 'Dermatology Consultation'.")));
 
             String rawResponse = restClient.post()
                     .uri(apiUrl)
@@ -100,7 +103,7 @@ public class OpenAiSymptomAnalysisService {
                 for (JsonNode node : json.path("serviceKeywords")) {
                     String keyword = node.asText("").trim();
                     if (!keyword.isBlank()) {
-                        keywords.add(keyword);
+                        keywords.addAll(normalizeServiceKeywords(keyword, doctor, symptoms));
                     }
                 }
             }
@@ -176,5 +179,54 @@ public class OpenAiSymptomAnalysisService {
             }
         }
         return false;
+    }
+
+    private List<String> normalizeServiceKeywords(String rawKeyword, String doctorSpecialization, String symptoms) {
+        String keyword = rawKeyword == null ? "" : rawKeyword.trim();
+        if (keyword.isBlank()) {
+            return List.of();
+        }
+
+        String lowerKeyword = keyword.toLowerCase();
+        String lowerSymptoms = symptoms == null ? "" : symptoms.toLowerCase();
+        Set<String> normalized = new LinkedHashSet<>();
+
+        if (containsAny(lowerKeyword, "chest pain", "cardiac evaluation", "heart check", "heart issue")
+                || ("cardiologist".equalsIgnoreCase(doctorSpecialization) && containsAny(lowerSymptoms, "chest", "heart", "walking", "palpitation", "pressure"))) {
+            normalized.addAll(Arrays.asList("Cardiology Consultation", "ECG", "ECHO"));
+        } else if (containsAny(lowerKeyword, "skin", "rash", "itch", "allergy")) {
+            normalized.addAll(Arrays.asList("Dermatology Consultation", "Allergy Test"));
+        } else if (containsAny(lowerKeyword, "bone", "joint", "back pain", "orthopedic")) {
+            normalized.addAll(Arrays.asList("Orthopedic Consultation", "X-Ray", "Physiotherapy"));
+        } else if (containsAny(lowerKeyword, "headache", "migraine", "neuro", "dizziness")) {
+            normalized.addAll(Arrays.asList("Neurology Consultation", "MRI"));
+        } else if (containsAny(lowerKeyword, "cough", "lung", "breath", "asthma", "pulmonary")) {
+            normalized.addAll(Arrays.asList("Pulmonology Consultation", "Chest X-Ray", "CBC"));
+        } else if (containsAny(lowerKeyword, "stomach", "abdomen", "gas", "acidity", "gastro")) {
+            normalized.addAll(Arrays.asList("Gastro Consultation", "Ultrasound", "Endoscopy"));
+        }
+
+        if (normalized.isEmpty()) {
+            normalized.add(cleanServiceKeyword(keyword));
+        }
+
+        if (normalized.stream().noneMatch(value -> value.toLowerCase().contains("consultation"))
+                && doctorSpecialization != null
+                && !doctorSpecialization.isBlank()) {
+            normalized.add(doctorSpecialization.trim() + " Consultation");
+        }
+
+        return normalized.stream()
+                .map(this::cleanServiceKeyword)
+                .filter(value -> !value.isBlank())
+                .toList();
+    }
+
+    private String cleanServiceKeyword(String keyword) {
+        String cleaned = keyword == null ? "" : keyword.trim();
+        cleaned = cleaned.replace("Evaluation", "Consultation");
+        cleaned = cleaned.replace("evaluation", "Consultation");
+        cleaned = cleaned.replace("Checkup", "Consultation");
+        return cleaned;
     }
 }

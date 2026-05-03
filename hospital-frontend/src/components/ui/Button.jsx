@@ -11,7 +11,7 @@ export default function Button({ variant = "primary", className = "", children, 
     <motion.button
       whileHover={{ y: -1, scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
-      className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${variants[variant]} ${className}`}
+      className={`min-h-[42px] rounded-xl px-4 py-2.5 text-sm font-semibold transition ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

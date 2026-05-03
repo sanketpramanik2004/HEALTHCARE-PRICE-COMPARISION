@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.sanket.hospital.entity.User;
 import com.sanket.hospital.security.JwtUtil;
+import com.sanket.hospital.service.GoogleAuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -23,7 +24,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/hospitals")
-@CrossOrigin(origins = "*")
 public class HospitalController {
 
     @Autowired
@@ -219,6 +219,9 @@ public class HospitalController {
         payload.put("name", savedUser.getName());
         payload.put("email", savedUser.getEmail());
         payload.put("role", savedUser.getRole());
+        payload.put("age", savedUser.getAge());
+        payload.put("gender", savedUser.getGender());
+        payload.put("phoneNumber", savedUser.getPhoneNumber());
         if (savedUser.getHospital() != null) {
             payload.put("hospitalId", savedUser.getHospital().getId());
             payload.put("hospitalName", savedUser.getHospital().getName());
@@ -228,6 +231,9 @@ public class HospitalController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private GoogleAuthService googleAuthService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
@@ -243,6 +249,9 @@ public class HospitalController {
             payload.put("role", user.getRole());
             payload.put("name", user.getName());
             payload.put("email", user.getEmail());
+            payload.put("age", user.getAge());
+            payload.put("gender", user.getGender());
+            payload.put("phoneNumber", user.getPhoneNumber());
             payload.put("hospitalId", hospitalId);
             payload.put("hospitalName", user.getHospital() != null ? user.getHospital().getName() : null);
             return ResponseEntity.ok(payload);
@@ -250,5 +259,24 @@ public class HospitalController {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("message", "Invalid credentials"));
+    }
+
+    @PostMapping("/google-login")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> payload) {
+        String credential = payload.getOrDefault("credential", "");
+        User user = googleAuthService.authenticate(credential);
+
+        Map<String, Object> response = new HashMap<>();
+        Long hospitalId = user.getHospital() != null ? user.getHospital().getId() : null;
+        response.put("token", jwtUtil.generateToken(user.getEmail(), user.getRole(), hospitalId));
+        response.put("role", user.getRole());
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+        response.put("age", user.getAge());
+        response.put("gender", user.getGender());
+        response.put("phoneNumber", user.getPhoneNumber());
+        response.put("hospitalId", hospitalId);
+        response.put("hospitalName", user.getHospital() != null ? user.getHospital().getName() : null);
+        return ResponseEntity.ok(response);
     }
 }

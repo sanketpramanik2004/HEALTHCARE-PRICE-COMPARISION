@@ -11,7 +11,7 @@ const links = [
 
 export default function AdminWorkspaceNav() {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid gap-2 sm:flex sm:flex-wrap">
       {links.map((link) => {
         const Icon = link.icon;
         return (
@@ -20,7 +20,7 @@ export default function AdminWorkspaceNav() {
             to={link.to}
             end={link.end}
             className={({ isActive }) =>
-              `inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+              `inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition sm:justify-start ${
                 isActive
                   ? "bg-brand-700 text-white shadow-sm"
                   : "bg-white/80 text-slate-600 hover:bg-slate-100"

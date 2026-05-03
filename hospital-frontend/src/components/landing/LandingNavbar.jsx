@@ -24,14 +24,14 @@ export default function LandingNavbar({ session }) {
         isScrolled ? "bg-white/85 shadow-card backdrop-blur-xl" : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-6">
-        <Link to="/" className="inline-flex items-center gap-2">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
+        <Link to="/" className="inline-flex min-w-0 items-center gap-2">
           <div className="rounded-xl bg-brand-700 p-2 text-white">
             <HeartPulse className="h-5 w-5" />
           </div>
-          <div>
-            <p className="text-sm font-bold text-slate-900">{t("nav.healthCompass")}</p>
-            <p className="text-xs text-slate-500">{t("nav.healthcareIntelligence")}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-slate-900">{t("nav.healthCompass")}</p>
+            <p className="truncate text-xs text-slate-500">{t("nav.healthcareIntelligence")}</p>
           </div>
         </Link>
 
@@ -50,20 +50,20 @@ export default function LandingNavbar({ session }) {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="ml-auto flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
           <LanguageSwitcher />
         {!session ? (
-          <Link to="/auth" className="rounded-xl bg-brand-700 px-4 py-2 text-sm font-semibold text-white">
+          <Link to="/auth" className="rounded-xl bg-brand-700 px-3 py-2 text-sm font-semibold text-white sm:px-4">
             {t("nav.signIn")}
           </Link>
         ) : (
           <div className="relative">
             <button
               onClick={() => setOpen((v) => !v)}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow"
+              className="inline-flex max-w-[min(72vw,260px)] items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow"
             >
               <Compass className="h-4 w-4 text-brand-700" />
-              {session.name}
+              <span className="truncate">{session.name}</span>
               <ChevronDown className="h-4 w-4" />
             </button>
             {open && (

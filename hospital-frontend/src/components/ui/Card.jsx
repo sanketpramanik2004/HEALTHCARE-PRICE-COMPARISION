@@ -7,7 +7,7 @@ export default function Card({ className = "", children }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
       whileHover={{ y: -2 }}
-      className={`glass-card p-5 ${className}`}
+      className={`glass-card p-4 sm:p-5 ${className}`}
     >
       {children}
     </motion.section>

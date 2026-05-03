@@ -101,6 +101,48 @@ export default function AiAssistantPage({
               text={t("ai.quick3Text")}
             />
           </div>
+
+          <div className="grid gap-4 lg:grid-cols-[1.05fr,0.95fr]">
+            <Card className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Good Prompts</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">Try symptom descriptions that work well</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  "itchy red rash on arms from last 5 days",
+                  "knee pain and swelling while climbing stairs for 1 week",
+                  "cough with shortness of breath and mild fever for 4 days",
+                  "stomach pain with acidity and vomiting since yesterday",
+                ].map((example) => (
+                  <button
+                    key={example}
+                    type="button"
+                    onClick={() => setSymptoms(example)}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800"
+                  >
+                    {example}
+                  </button>
+                ))}
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                The strongest prompts mention the symptom, how long it has been happening, and any trigger like walking,
+                eating, fever, or swelling.
+              </div>
+            </Card>
+
+            <Card className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">What Happens Next</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">How to use the AI result well</h3>
+              </div>
+              <div className="space-y-3">
+                <FlowRow index="1" title="Review the doctor suggestion" text="Use it as a first direction, not a final diagnosis." />
+                <FlowRow index="2" title="Compare real services" text="Tap one of the suggested services to see matching hospitals and prices." />
+                <FlowRow index="3" title="Book and track updates" text="Choose a doctor or hospital, then follow approval and completion from your dashboard." />
+              </div>
+            </Card>
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -269,5 +311,19 @@ function QuickCard({ icon: Icon, title, text }) {
       <h4 className="font-semibold text-slate-800">{title}</h4>
       <p className="text-sm text-slate-500">{text}</p>
     </Card>
+  );
+}
+
+function FlowRow({ index, title, text }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-bold text-white">
+        {index}
+      </div>
+      <div>
+        <h4 className="font-semibold text-slate-800">{title}</h4>
+        <p className="mt-1 text-sm text-slate-600">{text}</p>
+      </div>
+    </div>
   );
 }

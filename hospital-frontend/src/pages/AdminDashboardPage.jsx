@@ -14,7 +14,7 @@ export default function AdminDashboardPage({
 
   return (
     <AdminHero hospitalProfile={hospitalProfile} adminServices={adminServices} adminAppointments={adminAppointments} adminDoctors={adminDoctors}>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <OverviewLinkCard
           icon={ShieldPlus}
           title="Services"
@@ -47,7 +47,7 @@ export default function AdminDashboardPage({
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr,0.9fr]">
         <Card>
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-slate-900">Pending approvals snapshot</h3>
             <Link to="/admin/approvals" className="text-sm font-semibold text-brand-700">
               Open approvals
@@ -59,9 +59,9 @@ export default function AdminDashboardPage({
             ) : (
               pendingAppointments.slice(0, 4).map((appt) => (
                 <div key={appt.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-800">{appt.userName}</p>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-slate-800">{appt.userName}</p>
                       <p className="text-sm text-slate-500">{appt.serviceName}</p>
                     </div>
                     <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
@@ -78,7 +78,7 @@ export default function AdminDashboardPage({
         </Card>
 
         <Card>
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-slate-900">Team and catalog snapshot</h3>
             <Link to="/admin/doctors" className="text-sm font-semibold text-brand-700">
               Open doctors
@@ -90,7 +90,7 @@ export default function AdminDashboardPage({
               <div className="mt-3 space-y-2">
                 {adminDoctors.slice(0, 3).map((doctor) => (
                   <div key={doctor.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="font-semibold text-slate-800">Dr. {doctor.name}</p>
+                    <p className="break-words font-semibold text-slate-800">Dr. {doctor.name}</p>
                     <p className="text-sm text-slate-500">{doctor.specialization}</p>
                   </div>
                 ))}
@@ -102,7 +102,7 @@ export default function AdminDashboardPage({
               <div className="mt-3 space-y-2">
                 {adminServices.slice(0, 3).map((service) => (
                   <div key={service.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                    <p className="font-semibold text-slate-800">{service.serviceName}</p>
+                    <p className="break-words font-semibold text-slate-800">{service.serviceName}</p>
                     <p className="text-sm text-slate-500">₹{service.price}</p>
                   </div>
                 ))}
@@ -125,9 +125,9 @@ function OverviewLinkCard({ icon: Icon, title, text, count, to }) {
         </div>
         <h3 className="mt-4 text-lg font-semibold text-slate-900">{title}</h3>
         <p className="mt-2 text-sm text-slate-500">{text}</p>
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold text-brand-700 ring-1 ring-brand-100">
-          <span>{count}</span>
-          <span className="inline-flex items-center gap-1">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold text-brand-700 ring-1 ring-brand-100">
+          <span className="break-words">{count}</span>
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
             Open
             <ArrowRight className="h-4 w-4" />
           </span>

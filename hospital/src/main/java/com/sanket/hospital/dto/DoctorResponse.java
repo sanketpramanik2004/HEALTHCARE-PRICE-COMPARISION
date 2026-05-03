@@ -6,6 +6,8 @@ public record DoctorResponse(
         String specialization,
         Integer experience,
         double consultationFee,
+        double averageRating,
+        Integer reviewCount,
         String availability,
         double distanceKm,
         HospitalSummary hospital) {
@@ -16,6 +18,7 @@ public record DoctorResponse(
             String location,
             double latitude,
             double longitude,
-            double rating) {
+            double rating,
+            Integer reviewCount) {
     }
 }

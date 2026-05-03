@@ -7,7 +7,7 @@ export default function FooterSection() {
     <footer className="mt-8 border-t border-slate-200 bg-white/70">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-8 text-sm text-slate-600 md:flex-row md:items-center lg:px-6">
         <p>© {new Date().getFullYear()} HealthCompass</p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <a href="/#/about" className="hover:text-brand-700">
             {t("home.about")}
           </a>

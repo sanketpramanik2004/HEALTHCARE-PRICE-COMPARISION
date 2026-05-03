@@ -1,4 +1,4 @@
-import { Bot, CalendarCheck2, Compass, House, Hospital, ShieldCheck, ShieldPlus, Stethoscope, TimerReset, CalendarClock } from "lucide-react";
+import { Bot, CalendarCheck2, Compass, House, Hospital, ShieldCheck, ShieldPlus, Stethoscope, TimerReset, CalendarClock, UserRound } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useI18n } from "../../i18n/I18nProvider";
 
@@ -7,6 +7,7 @@ const links = [
   { to: "/explore", key: "nav.explore", icon: Compass },
   { to: "/ai", key: "nav.ai", icon: Bot },
   { to: "/bookings", key: "nav.bookings", icon: CalendarCheck2 },
+  { to: "/profile", label: "Profile", icon: UserRound, userOnly: true },
   { to: "/admin", key: "nav.admin", icon: ShieldCheck, adminOnly: true },
 ];
 
@@ -32,7 +33,7 @@ export default function Sidebar({ session }) {
 
       <nav className="space-y-1">
         {links
-          .filter((link) => !link.adminOnly || session?.role === "ADMIN")
+          .filter((link) => (!link.adminOnly || session?.role === "ADMIN") && (!link.userOnly || session?.role === "USER"))
           .map((link) => {
             const Icon = link.icon;
             return (
@@ -46,7 +47,7 @@ export default function Sidebar({ session }) {
                 }
               >
                 <Icon className="h-4 w-4" />
-                <span>{t(link.key)}</span>
+                <span>{link.key ? t(link.key) : link.label}</span>
               </NavLink>
             );
           })}

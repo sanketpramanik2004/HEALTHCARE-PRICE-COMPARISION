@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply bg-cream-100 text-slate-800 font-sans antialiased;
+    @apply bg-slate-50 text-slate-800 font-sans antialiased;
   }
 
   a,
@@ -23,6 +23,6 @@
 
 @layer components {
   .glass-card {
-    @apply border border-white/60 bg-white/70 backdrop-blur-xl shadow-card rounded-2xl;
+    @apply rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-card;
   }
 }

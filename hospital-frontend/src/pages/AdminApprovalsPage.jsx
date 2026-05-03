@@ -68,6 +68,10 @@ export default function AdminApprovalsPage({
                       {t("adminDashboard.reject")}
                     </Button>
                   </div>
+                ) : appt.status === "CONFIRMED" ? (
+                  <div className="mt-3 flex gap-2">
+                    <Button onClick={() => onUpdateStatus(appt.id, "COMPLETED")}>Mark Completed</Button>
+                  </div>
                 ) : null}
               </div>
             ))
@@ -80,6 +84,9 @@ export default function AdminApprovalsPage({
 
 function StatusPill({ status, labels }) {
   const style =
+    status === "COMPLETED"
+      ? "bg-sky-100 text-sky-700"
+      : 
     status === "CONFIRMED"
       ? "bg-emerald-100 text-emerald-700"
       : status === "REJECTED"

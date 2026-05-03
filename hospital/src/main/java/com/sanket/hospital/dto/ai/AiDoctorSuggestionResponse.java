@@ -26,6 +26,7 @@ public record AiDoctorSuggestionResponse(
             String location,
             double latitude,
             double longitude,
-            double rating) {
+            double rating,
+            Integer reviewCount) {
     }
 }

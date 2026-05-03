@@ -77,12 +77,17 @@ public class JwtFilter implements Filter {
 
     private boolean isPublicEndpoint(String path, String method) {
         return path.contains("/login")
+                || path.contains("/google-login")
                 || path.contains("/register")
                 || path.endsWith("/all")
                 || path.contains("/search")
                 || path.contains("/compare")
                 || path.contains("/nearest")
                 || path.contains("/best")
+                || ("GET".equalsIgnoreCase(method) && path.matches("/reviews/doctor/\\d+"))
+                || ("GET".equalsIgnoreCase(method) && path.matches("/reviews/hospital/\\d+"))
+                || ("GET".equalsIgnoreCase(method) && path.matches("/reviews/doctor/\\d+/summary"))
+                || ("GET".equalsIgnoreCase(method) && path.matches("/reviews/hospital/\\d+/summary"))
                 || ("GET".equalsIgnoreCase(method) && path.equals("/doctors"))
                 || ("GET".equalsIgnoreCase(method) && path.matches("/hospitals/\\d+/doctors"))
                 || ("GET".equalsIgnoreCase(method) && path.matches("/doctors/\\d+/availableSlots"));
@@ -90,7 +95,7 @@ public class JwtFilter implements Filter {
 
     private boolean isAdminOnlyEndpoint(String path, String method) {
         return path.contains("/updateStatus")
-                || path.contains("/appointments")
+                || path.equals("/hospitals/appointments")
                 || path.contains("/myHospitalAppointments")
                 || path.contains("/myHospitalServices")
                 || path.contains("/addService")
@@ -104,6 +109,10 @@ public class JwtFilter implements Filter {
 
     private boolean isUserOnlyEndpoint(String path, String method) {
         return path.contains("/book")
-                || path.contains("/myAppointments");
+                || path.contains("/myAppointments")
+                || path.startsWith("/user/")
+                || path.startsWith("/medical-history")
+                || ("POST".equalsIgnoreCase(method) && path.equals("/reviews"))
+                || path.equals("/reviews/mine");
     }
 }

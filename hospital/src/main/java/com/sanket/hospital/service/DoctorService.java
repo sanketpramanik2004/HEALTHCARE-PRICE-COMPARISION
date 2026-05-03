@@ -167,9 +167,10 @@ public class DoctorService {
     }
 
     private double computeScore(Doctor doctor, double distanceKm, Double lat, Double lon) {
-        double ratingScore = (5 - doctor.getHospital().getRating()) * 150;
+        double doctorRatingBoost = (5 - doctor.getAverageRating()) * 120;
+        double hospitalRatingScore = (5 - doctor.getHospital().getRating()) * 80;
         double distanceScore = (lat != null && lon != null) ? distanceKm * 12 : 0;
-        return doctor.getConsultationFee() + distanceScore + ratingScore;
+        return doctor.getConsultationFee() + distanceScore + doctorRatingBoost + hospitalRatingScore;
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
@@ -193,6 +194,8 @@ public class DoctorService {
                 doctor.getSpecialization(),
                 doctor.getExperience(),
                 doctor.getConsultationFee(),
+                doctor.getAverageRating(),
+                doctor.getReviewCount() == null ? 0 : doctor.getReviewCount(),
                 doctor.getAvailability(),
                 distanceKm,
                 new DoctorResponse.HospitalSummary(
@@ -201,7 +204,8 @@ public class DoctorService {
                         doctor.getHospital().getLocation(),
                         doctor.getHospital().getLatitude(),
                         doctor.getHospital().getLongitude(),
-                        doctor.getHospital().getRating()));
+                        doctor.getHospital().getRating(),
+                        doctor.getHospital().getReviewCount() == null ? 0 : doctor.getHospital().getReviewCount()));
     }
 
     private record RankedDoctor(Doctor doctor, double distanceKm, double score) {

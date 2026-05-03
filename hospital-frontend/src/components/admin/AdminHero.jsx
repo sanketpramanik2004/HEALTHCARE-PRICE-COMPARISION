@@ -16,11 +16,11 @@ export default function AdminHero({ hospitalProfile, adminServices, adminAppoint
     <div className="space-y-6">
       <Card className="bg-gradient-to-r from-brand-700 via-brand-700 to-emerald-600 p-7 text-white">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">{t("adminDashboard.badge")}</p>
-        <h2 className="mt-2 text-3xl font-bold">{hospitalProfile?.name || t("adminDashboard.fallbackTitle")}</h2>
+        <h2 className="mt-2 text-2xl font-bold sm:text-3xl">{hospitalProfile?.name || t("adminDashboard.fallbackTitle")}</h2>
         <p className="mt-1 text-white/85">
           {hospitalProfile?.location || t("adminDashboard.fallbackText")}
         </p>
-        <div className="mt-5 grid gap-3 md:grid-cols-5">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
           <Metric icon={ListChecks} label={t("adminDashboard.totalServices")} value={adminServices.length} />
           <Metric icon={Activity} label={t("adminDashboard.pendingApprovals")} value={pendingCount} />
           <Metric icon={CircleCheckBig} label={t("adminDashboard.confirmedToday")} value={confirmedCount} />
@@ -51,7 +51,7 @@ function Metric({ icon: Icon, label, value }) {
         <Icon className="h-4 w-4" />
         <span className="text-xs uppercase tracking-wider">{label}</span>
       </div>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+      <p className="mt-1 break-words text-2xl font-bold">{value}</p>
     </div>
   );
 }

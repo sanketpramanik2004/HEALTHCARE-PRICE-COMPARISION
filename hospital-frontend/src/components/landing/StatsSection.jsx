@@ -24,9 +24,15 @@ function useCount(target, duration = 900) {
 export default function StatsSection({ hospitals }) {
   const { t } = useI18n();
   const indexed = hospitals.length || 0;
+  const ratedHospitals = hospitals.filter((hospital) => Number(hospital.rating) > 0);
   const avgRating =
-    hospitals.length > 0
-      ? Number((hospitals.reduce((acc, h) => acc + (h.rating || 0), 0) / hospitals.length).toFixed(1))
+    ratedHospitals.length > 0
+      ? Number(
+          (
+            ratedHospitals.reduce((acc, hospital) => acc + Number(hospital.rating || 0), 0) /
+            ratedHospitals.length
+          ).toFixed(1)
+        )
       : 0;
   const regions = new Set(hospitals.map((h) => h.location)).size;
 
@@ -37,7 +43,7 @@ export default function StatsSection({ hospitals }) {
   ];
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-14 lg:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:py-14 lg:px-6">
       <div className="grid gap-4 md:grid-cols-3">
         {cards.map((card, i) => (
           <StatCard key={card.label} {...card} delay={i * 0.08} />
@@ -56,10 +62,10 @@ function StatCard({ label, value, suffix = "", icon: Icon, delay = 0, decimal = 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay }}
-      className="glass-card p-6"
+      className="rounded-2xl border border-slate-200/80 bg-white/92 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6"
     >
       <Icon className="h-5 w-5 text-brand-700" />
-      <p className="mt-4 text-3xl font-extrabold text-slate-900">
+      <p className="mt-3 text-3xl font-extrabold text-slate-900">
         {shown}
         {suffix}
       </p>

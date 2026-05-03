@@ -78,6 +78,7 @@ Implemented:
 - Booking starts as `PENDING`
 - Admin can mark:
   - `CONFIRMED`
+  - `COMPLETED`
   - `REJECTED`
 
 Important fix:
@@ -93,11 +94,15 @@ Key backend endpoint:
 
 Implemented:
 
-- Confirmation email on `CONFIRMED` appointments
+- Booking status email on:
+  - `CONFIRMED`
+  - `REJECTED`
+  - `COMPLETED`
 
 Important note:
 
-- Mail config in `application.properties` still uses placeholder SMTP values unless changed manually
+- Email sending is still best-effort
+- Local SMTP values are expected in `application-local.properties` or env overrides
 
 ### 6. Compare by Price + Distance
 
@@ -185,6 +190,7 @@ Key page files:
 - `hospital-frontend/src/pages/ExplorePage.jsx`
 - `hospital-frontend/src/pages/AiAssistantPage.jsx`
 - `hospital-frontend/src/pages/UserDashboardPage.jsx`
+- `hospital-frontend/src/pages/UserProfilePage.jsx`
 - `hospital-frontend/src/pages/AdminDashboardPage.jsx`
 - `hospital-frontend/src/pages/BookingPage.jsx`
 
@@ -279,6 +285,236 @@ Added:
 - richer lower content layout
 - more intentional two-column structure
 
+### 15. Doctor Consultation Module
+
+Implemented:
+
+- New `Doctor` entity linked to hospitals
+- Doctor search by specialization
+- Doctor booking integrated with appointment flow
+- AI now returns doctor suggestions as part of symptom analysis
+- Doctor-specific booking path coexists with service booking
+
+Backend additions:
+
+- `hospital/src/main/java/com/sanket/hospital/entity/Doctor.java`
+- `hospital/src/main/java/com/sanket/hospital/repository/DoctorRepository.java`
+- `hospital/src/main/java/com/sanket/hospital/service/DoctorService.java`
+- `hospital/src/main/java/com/sanket/hospital/controller/DoctorController.java`
+
+Frontend additions:
+
+- doctor mode in Explore
+- doctor suggestions in AI Assistant
+- doctor cards in Hospital Details
+- doctor-aware booking flow
+- doctor management in admin
+
+### 16. Admin Workspace Split Into Multiple Pages
+
+The admin area was refactored from one long page into a multi-page workspace.
+
+New admin routes:
+
+- `/admin` -> overview
+- `/admin/services` -> services
+- `/admin/doctors` -> doctors
+- `/admin/slots` -> slots
+- `/admin/approvals` -> approvals
+
+New shared admin components:
+
+- `hospital-frontend/src/components/admin/AdminHero.jsx`
+- `hospital-frontend/src/components/admin/AdminWorkspaceNav.jsx`
+
+New admin pages:
+
+- `hospital-frontend/src/pages/AdminServicesPage.jsx`
+- `hospital-frontend/src/pages/AdminDoctorsPage.jsx`
+- `hospital-frontend/src/pages/AdminSlotsPage.jsx`
+- `hospital-frontend/src/pages/AdminApprovalsPage.jsx`
+
+Navigation behavior:
+
+- top admin workspace navigation remains
+- admin sublinks were also added to the left sidebar
+- overview cards now act as highlighted section entry points
+
+### 17. Reviews and Ratings System
+
+Implemented:
+
+- Patients can review completed appointments only
+- One review per appointment
+- Doctor bookings review the doctor
+- Service/hospital bookings review the hospital
+- Ratings are surfaced in:
+  - Explore
+  - Hospital Details
+  - Profile review history
+
+Backend additions:
+
+- `Review` entity
+- `ReviewRepository`
+- `ReviewService`
+- `ReviewController`
+
+Frontend additions:
+
+- review submission area on `hospital-frontend/src/pages/UserProfilePage.jsx`
+- rating display on `hospital-frontend/src/pages/ExplorePage.jsx`
+- hospital review display on `hospital-frontend/src/pages/HospitalDetailsPage.jsx`
+- review shortcut from `hospital-frontend/src/pages/UserDashboardPage.jsx`
+
+Key endpoints:
+
+- `POST /reviews`
+- `GET /reviews/doctor/{doctorId}`
+- `GET /reviews/hospital/{hospitalId}`
+- `GET /reviews/doctor/{doctorId}/summary`
+- `GET /reviews/hospital/{hospitalId}/summary`
+- `GET /reviews/mine`
+
+Important behavior:
+
+- Review creation is blocked unless appointment status is `COMPLETED`
+- `Doctor.averageRating` and `Hospital.rating` / `reviewCount` are updated from reviews
+- AI doctor and hospital recommendation views now show rating-aware data
+
+### 18. User Profile and Medical History
+
+Implemented:
+
+- New patient profile page
+- Persistent patient details:
+  - name
+  - age
+  - gender
+  - phone number
+- Persistent medical history entries
+- Appointment history and review history on profile page
+
+Backend additions:
+
+- `MedicalHistory` entity
+- `MedicalHistoryRepository`
+- `UserProfileService`
+- `UserProfileController`
+
+Frontend additions:
+
+- new route/page: `hospital-frontend/src/pages/UserProfilePage.jsx`
+- sidebar link in `hospital-frontend/src/components/layout/Sidebar.jsx`
+- profile-aware session/default booking handling in `hospital-frontend/src/App.js`
+
+Key endpoints:
+
+- `GET /user/profile`
+- `PUT /user/profile`
+- `GET /user/appointments`
+- `POST /medical-history`
+- `GET /medical-history`
+- `DELETE /medical-history/{id}`
+
+Important behavior:
+
+- Appointments are now linked to the authenticated `User`
+- Booking form defaults hydrate from the saved patient profile
+- Profile page uses partial loading so one failing section does not blank the whole page
+
+### 19. Google Sign-In
+
+Implemented:
+
+- Patient Google sign-in on the auth page
+- Backend Google ID token verification
+- Existing local login flow remains unchanged
+
+Backend additions:
+
+- `GoogleAuthService`
+- `POST /hospitals/google-login`
+
+Frontend additions:
+
+- Google sign-in button on `AuthPage`
+- Session payload handling reuses the same JWT/localStorage flow as email/password login
+
+Important config:
+
+- Backend expects `google.oauth.client-id`
+- Frontend expects `REACT_APP_GOOGLE_CLIENT_ID`
+- Google sign-in currently creates/opens `USER` accounts only, not `ADMIN`
+
+### 20. AI Matching Quality Improvements
+
+Implemented:
+
+- OpenAI prompt tightened so AI suggests hospital-bookable services instead of vague symptom phrases
+- Backend normalization maps vague outputs into service catalog friendly terms
+
+Examples:
+
+- `chest pain` / `cardiac evaluation` now normalize toward:
+  - `Cardiology Consultation`
+  - `ECG`
+  - `ECHO`
+
+Impact:
+
+- Better service chips in AI Assistant
+- Better hospital matches for Analyze + Compare flow
+
+### 21. Frontend UX Polish
+
+Implemented:
+
+- Auth page now includes:
+  - home navigation button
+  - breadcrumb-style header row
+  - improved lower helper content
+  - better vertical panel balance
+- AI assistant page lower-left dead space replaced with:
+  - good prompt examples
+  - next-step guidance cards
+- Profile page error handling improved:
+  - API errors now show more useful text
+  - page can still render partially if one section fails
+
+### 22. Mobile Responsiveness and Deployment Readiness
+
+Implemented:
+
+- broad mobile responsiveness pass across landing, auth, explore, booking, profile, dashboard, and admin screens
+- tighter mobile spacing, card density, button stacking, and text wrapping
+- improved mobile first-viewport composition on the landing and auth pages
+- frontend API configuration now uses environment-driven base URLs instead of hardcoded localhost usage
+- backend CORS is now centralized and environment-driven instead of per-controller `@CrossOrigin("*")`
+
+Frontend deployment additions:
+
+- `hospital-frontend/src/lib/api.js` now reads:
+  - `REACT_APP_API_ROOT_URL`
+  - `REACT_APP_GOOGLE_CLIENT_ID`
+- new example env file:
+  - `hospital-frontend/.env.example`
+
+Backend deployment additions:
+
+- new centralized config:
+  - `hospital/src/main/java/com/sanket/hospital/config/CorsConfig.java`
+- backend property:
+  - `app.cors.allowed-origins`
+- environment variable support:
+  - `CORS_ALLOWED_ORIGINS`
+
+Important behavior:
+
+- local frontend still works with default backend fallbacks on `localhost`
+- production frontend can point to any deployed backend via `REACT_APP_API_ROOT_URL`
+- production backend can restrict browser access to explicit frontend origins via `CORS_ALLOWED_ORIGINS`
+
 ## Important Database Notes
 
 ### Tables in Use
@@ -288,6 +524,9 @@ Added:
 - `service_entity`
 - `appointment`
 - `hospital_slot`
+- `doctor`
+- `review`
+- `medical_history`
 
 ### Important Config
 
@@ -295,8 +534,22 @@ Added:
 
 - MySQL datasource
 - `spring.jpa.hibernate.ddl-auto=update`
-- mail placeholders
+- local config import: `spring.config.import=optional:classpath:application-local.properties`
+- env-driven placeholders for DB / mail / JWT / Google / OpenAI values
+- env-driven CORS allowed origins:
+  - `app.cors.allowed-origins=${CORS_ALLOWED_ORIGINS:...}`
+- mail placeholders / overrides
+- Google OAuth client id placeholder
 - OpenAI env-based config
+
+Local-only files now in use:
+
+- `hospital/src/main/resources/application-local.properties`
+- `hospital-frontend/.env.local`
+
+Deployment helper files now in use:
+
+- `hospital-frontend/.env.example`
 
 ## Data Cleanup Already Done
 
@@ -314,27 +567,45 @@ Working:
 
 - login
 - registration
+- Google patient sign-in
 - role-based access
 - admin hospital isolation
 - price comparison
 - best nearby lookup
 - map
 - AI symptom analysis
+- AI doctor + service suggestions with better service normalization
 - multilingual UI
 - slot-based booking
 - admin service management
 - patient detail capture during booking
+- patient profile
+- medical history
+- review creation after completed appointments
+- rating display on doctor/hospital surfaces
+- booking status emails for confirm/reject/complete
+- admin complete-marking flow
+- mobile-responsive landing/auth/explore/booking/profile/admin layouts
+- environment-driven frontend API base URL configuration
+- centralized backend CORS configuration for deployment
 
 Verified:
 
 - backend compile passed multiple times via `.\mvnw.cmd -q -DskipTests compile`
 - frontend build passed multiple times via `npm run build`
+- latest reviews/profile integration also compiled and built successfully
+- frontend build also passed after mobile responsiveness, env URL config, and backend deployment prep changes
 
 ## Known Caveats
 
 - Mail sending depends on valid SMTP credentials in `application.properties`
+- Google sign-in depends on matching Google client IDs in backend and frontend local config
+- frontend deployment requires setting `REACT_APP_API_ROOT_URL`
+- backend deployment requires setting `CORS_ALLOWED_ORIGINS` to the deployed frontend origin(s)
 - If backend entity changes are made, backend restart is required so Hibernate updates schema
 - If slots or services appear missing in admin UI, make sure logged-in admin belongs to the expected `hospital_id`
+- If profile page shows partial-load errors, check the specific endpoint named in the banner
+- Port `8080` conflicts can happen locally if an old Spring Boot Java process is still running
 
 ## Suggested Next Features
 
@@ -344,12 +615,14 @@ Recommended next upgrades:
 2. Recurring slot generator
 3. Slot capacity per time window
 4. Notification center / reminders
-5. Reviews and ratings
-6. Insurance filtering
+5. Insurance filtering
+6. Review moderation / abuse reporting
+7. Doctor availability templates and recurring schedules
+8. Deployment docs for Render / Railway / Vercel / Netlify
+9. Health checks and production monitoring
 
 ## Suggested Prompt For Future ChatGPT Session
 
 You can paste this to a new ChatGPT session:
 
-> Read `PROJECT_UPGRADES_SUMMARY.md` and help me continue this Healthcare Price Navigator project. The backend is Spring Boot, frontend is React, and the app already includes JWT auth, admin hospital isolation, AI symptom analysis, multilingual UI, slot-based booking, and expanded patient details in appointments. Preserve existing APIs and do not break current booking/admin/auth flows.
-
+> Read `PROJECT_UPGRADES_SUMMARY.md` and help me continue this Healthcare Price Navigator project. The backend is Spring Boot, frontend is React, and the app now includes JWT auth, Google patient sign-in, admin hospital isolation, AI symptom analysis with normalized service suggestions, multilingual UI, slot-based booking, review/rating support, user profile + medical history, booking status email notifications, mobile-responsive frontend layouts, environment-driven frontend API configuration, and centralized backend CORS config. Preserve existing booking/admin/auth flows and local/deployment config conventions.
