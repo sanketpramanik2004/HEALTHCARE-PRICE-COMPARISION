@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.concurrent.CompletableFuture;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -189,41 +190,32 @@ public class HospitalService {
 
             // Email is optional: status update should still succeed if SMTP is not configured.
             if ("CONFIRMED".equals(normalizedStatus)) {
-                try {
-                    emailService.sendEmail(
-                            appt.getUserEmail(),
-                            "Appointment Confirmed",
-                            "Your appointment for " + appt.getServiceName() +
-                                    " at " + appt.getHospital().getName() +
-                                    " is CONFIRMED.");
-                } catch (Exception ex) {
-                    logger.warn("Appointment confirmed but confirmation email failed for appointmentId={}", appt.getId(),
-                            ex);
-                }
+                sendStatusEmailAsync(
+                        appt.getUserEmail(),
+                        "Appointment Confirmed",
+                        "Your appointment for " + appt.getServiceName() +
+                                " at " + appt.getHospital().getName() +
+                                " is CONFIRMED.",
+                        appt.getId(),
+                        "confirmation");
             } else if ("REJECTED".equals(normalizedStatus)) {
-                try {
-                    emailService.sendEmail(
-                            appt.getUserEmail(),
-                            "Appointment Update",
-                            "Your appointment for " + appt.getServiceName() +
-                                    " at " + appt.getHospital().getName() +
-                                    " was REJECTED. Please choose another slot or hospital.");
-                } catch (Exception ex) {
-                    logger.warn("Appointment rejected but rejection email failed for appointmentId={}", appt.getId(),
-                            ex);
-                }
+                sendStatusEmailAsync(
+                        appt.getUserEmail(),
+                        "Appointment Update",
+                        "Your appointment for " + appt.getServiceName() +
+                                " at " + appt.getHospital().getName() +
+                                " was REJECTED. Please choose another slot or hospital.",
+                        appt.getId(),
+                        "rejection");
             } else if ("COMPLETED".equals(normalizedStatus)) {
-                try {
-                    emailService.sendEmail(
-                            appt.getUserEmail(),
-                            "Appointment Completed",
-                            "Your appointment for " + appt.getServiceName() +
-                                    " at " + appt.getHospital().getName() +
-                                    " has been marked COMPLETED. You can now leave a review in your profile.");
-                } catch (Exception ex) {
-                    logger.warn("Appointment completed but follow-up email failed for appointmentId={}", appt.getId(),
-                            ex);
-                }
+                sendStatusEmailAsync(
+                        appt.getUserEmail(),
+                        "Appointment Completed",
+                        "Your appointment for " + appt.getServiceName() +
+                                " at " + appt.getHospital().getName() +
+                                " has been marked COMPLETED. You can now leave a review in your profile.",
+                        appt.getId(),
+                        "completion");
             }
 
             return saved;
@@ -474,6 +466,16 @@ public class HospitalService {
         if (alreadyBooked) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This slot has already been booked.");
         }
+    }
+
+    private void sendStatusEmailAsync(String to, String subject, String text, Long appointmentId, String emailType) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendEmail(to, subject, text);
+            } catch (Exception ex) {
+                logger.warn("Appointment {} email failed for appointmentId={}", emailType, appointmentId, ex);
+            }
+        });
     }
 
 }

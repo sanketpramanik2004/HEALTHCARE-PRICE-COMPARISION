@@ -16,6 +16,10 @@ public class EmailService {
     private String fromAddress;
 
     public void sendEmail(String to, String subject, String text) {
+        if (to == null || to.isBlank()) {
+            return;
+        }
+
         SimpleMailMessage message = new SimpleMailMessage();
         if (fromAddress != null && !fromAddress.isBlank()) {
             message.setFrom(fromAddress);
